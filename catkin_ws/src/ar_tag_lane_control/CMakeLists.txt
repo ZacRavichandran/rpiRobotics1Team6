@@ -71,6 +71,7 @@ find_package(catkin REQUIRED COMPONENTS
 #   duckietown_msgs#   geometry_msgs#   std_msgs
 # )
 
+
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
 ################################################
@@ -118,7 +119,8 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-## Declare a C++ library
+## Declare a cpp library
+
 # add_library(ar_tag_lane_control
 #   src/${PROJECT_NAME}/ar_tag_lane_control.cpp
 # )
