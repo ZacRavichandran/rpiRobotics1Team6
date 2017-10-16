@@ -49,8 +49,8 @@
 
     <group if="$(arg drive)">
         <!-- Wheel Driver -->
-	<remap from="wheels_driver_node/wheels_cmd" to="inverse_kinematics_logging_node/wheels_cmd"/>
-    	<include if="$(arg live)" file="$(find dagu_car)/launch/wheels_driver_node.launch">
+	<remap from="wheels_driver_logging_node/wheels_cmd" to="inverse_kinematics_logging_node/wheels_cmd"/>
+    	<include if="$(arg live)" file="$(find dagu_car)/launch/wheels_driver_logging_node.launch">
             <arg name="veh" value="$(arg veh)"/>
         </include>
     </group>
