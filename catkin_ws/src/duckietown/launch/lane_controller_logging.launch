@@ -12,7 +12,7 @@
 
     <group if="$(arg use_vicon)">
         <remap from="vicon_for_lane_node/vicon_pose" to="pose"/>
-        <remap from="vicon_for_lane_node/lane_pose" to="lane_controller_node/lane_pose"/>
+        <remap from="vicon_for_lane_node/lane_pose" to="lane_controller_logging_node/lane_pose"/>
         <include file="$(find lane_control)/launch/vicon_for_lane_node.launch">
             <arg name="veh" value="$(arg veh)"/>
             <arg name="local" value="$(arg local)"/>
@@ -31,8 +31,8 @@
     </include>
 
     <!-- Lane controller -->
-    <remap from="lane_controller_node/lane_pose" to="lane_filter_node/lane_pose"/>
-    <include file="$(find lane_control)/launch/lane_controller_node.launch">
+    <remap from="lane_controller_logging_node/lane_pose" to="lane_filter_logging_node/lane_pose"/>
+    <include file="$(find lane_control)/launch/lane_controller_logging_node.launch">
         <arg name="veh" value="$(arg veh)"/>
         <arg name="local" value="$(arg local)"/>
         <arg name="config" value="$(arg config)"/>
@@ -40,7 +40,7 @@
     </include>
 
     <!-- car_cmd_switch_node -->
-    <remap from="inverse_kinematics_node/car_cmd" to="lane_controller_node/car_cmd"/>
+    <remap from="inverse_kinematics_node/car_cmd" to="lane_controller_logging_node/car_cmd"/>
     <include file="$(find dagu_car)/launch/inverse_kinematics_node.launch">
         <arg name="veh" value="$(arg veh)"/>
         <arg name="local" value="$(arg local)"/>
