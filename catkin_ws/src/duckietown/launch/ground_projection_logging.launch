@@ -17,7 +17,7 @@
 		 <arg name="live" value="$(arg live)"/>
 	</include>
 
-	<include file="$(find ground_projection)/launch/ground_projection.launch">
+	<include file="$(find ground_projection)/launch/ground_projection_logging.launch">
 		 <arg name="veh" value="$(arg veh)"/>
 		 <arg name="local" value="$(arg local)"/>
 		 <arg name="config" value="$(arg config)"/>
