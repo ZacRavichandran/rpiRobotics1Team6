@@ -36,6 +36,7 @@ class ar_tag_lane_controller(object):
         stop_msg = Twist2DStamped()
         stop_msg.v = 0.0
         stop_msg.omega = 0.0
+        return stop_msg
 
     def setupParameter(self,param_name,default_value):
         value = rospy.get_param(param_name,default_value)
