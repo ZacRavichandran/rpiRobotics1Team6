@@ -28,8 +28,14 @@ class ar_tag_lane_controller(object):
         self.gains_timer = rospy.Timer(rospy.Duration.from_sec(1.0), self.getGains_event)
         rospy.loginfo("[%s] Initialized " %(rospy.get_name()))
 
-	# if should go
-	self.should_go = 1
+        self.stop_msg = self.get_stop_msg()
+        self.found_obstacle = False
+
+
+    def get_stop_msg(self):
+        stop_msg = Twist2DStamped()
+        stop_msg.v = 0.0
+        stop_msg.omega = 0.0
 
     def setupParameter(self,param_name,default_value):
         value = rospy.get_param(param_name,default_value)
@@ -114,7 +120,7 @@ class ar_tag_lane_controller(object):
         car_control_msg = Twist2DStamped()
         car_control_msg.header = lane_pose_msg.header
 	
-	# added stop flag
+	   # added stop flag
         car_control_msg.v = self.v_bar * self.should_go  #*self.speed_gain #Left stick V-axis. Up is positive
         
         if math.fabs(cross_track_err) > self.d_thres:
@@ -125,7 +131,10 @@ class ar_tag_lane_controller(object):
         # car_control_msg.steering = -car_control_msg.steering
         # print "controls: speed %f, steering %f" % (car_control_msg.speed, car_control_msg.steering)
         # self.pub_.publish(car_control_msg)
-        self.publishCmd(car_control_msg)
+        if not self.found_obstacle:
+            self.publishCmd(car_control_msg)
+        elif self.found_obstacle:
+            self.publishCmd(self.stop_msg)
 
         # debuging
         #self.pub_counter += 1
@@ -136,11 +145,13 @@ class ar_tag_lane_controller(object):
 
     def cbTags(self, tag_msg):
         rospy.loginfo("ar_tag_lane_control tag callback")
+        self.found_obstacle = False
         for tag_detection in tag_msg.detections:
             tag_id = int(tag_detection.id)
             z_pos = tag_detection.pose.pose.position.z
-            self.stop_flag = 0
-            rospy.loginfo("Found z pos to be %f" %(z_pos))
+            if z_pos < 0.3:
+                rospy.loginfo("Found z pos to be %f" %(z_pos))
+                self.found_obstacle = True
             #print("X pos: %d" % (x_pos))
             #TODO get header position
 
