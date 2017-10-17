@@ -121,7 +121,7 @@ class ar_tag_lane_controller(object):
         car_control_msg.header = lane_pose_msg.header
 	
 	   # added stop flag
-        car_control_msg.v = self.v_bar * self.should_go  #*self.speed_gain #Left stick V-axis. Up is positive
+        car_control_msg.v = self.v_bar  #*self.speed_gain #Left stick V-axis. Up is positive
         
         if math.fabs(cross_track_err) > self.d_thres:
             cross_track_err = cross_track_err / math.fabs(cross_track_err) * self.d_thres
