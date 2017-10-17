@@ -140,6 +140,7 @@ class ar_tag_lane_controller(object):
             tag_id = int(tag_detection.id)
             z_pos = tag_detection.pose.pose.position.z
             self.stop_flag = 0
+            rospy.loginfo("Found z pos to be %f" %(z_pos))
             #print("X pos: %d" % (x_pos))
             #TODO get header position
 
