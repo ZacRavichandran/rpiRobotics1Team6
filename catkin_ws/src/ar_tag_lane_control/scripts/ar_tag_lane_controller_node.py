@@ -135,6 +135,7 @@ class ar_tag_lane_controller(object):
         #    print car_control_msg
 
     def cbTags(self, tag_msg):
+        rospy.loginfo("ar_tag_lane_control tag callback")
         for tag_detection in tag_msg.detections:
             tag_id = int(tag_detection.id)
             z_pos = tag_detection.pose.pose.position.z
