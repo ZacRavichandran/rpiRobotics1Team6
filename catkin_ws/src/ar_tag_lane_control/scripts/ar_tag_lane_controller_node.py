@@ -143,14 +143,14 @@ class ar_tag_lane_controller(object):
         #    print car_control_msg
 
     def cbTags(self, tag_msg):
-        rospy.debug("ar_tag_lane_control tag callback")
+        rospy.logdebug("ar_tag_lane_control tag callback")
         self.found_obstacle = False
         for tag_detection in tag_msg.detections:
             tag_id = int(tag_detection.id)
             z_pos = tag_detection.pose.pose.position.z
             if z_pos < 0.3:
                 self.publishCmd(self.stop_msg)
-                rospy.debug("Found z pos to be %f" %(z_pos))
+                rospy.logdebug("Found z pos to be %f" %(z_pos))
                 self.found_obstacle = True
             #print("X pos: %d" % (x_pos))
             #TODO get header position
