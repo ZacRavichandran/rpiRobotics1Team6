@@ -31,6 +31,8 @@ class ar_tag_lane_controller(object):
         self.stop_msg = self.get_stop_msg()
         self.found_obstacle = False
 
+        self.stop_dist = 1
+
 
     def get_stop_msg(self):
         stop_msg = Twist2DStamped()
@@ -148,7 +150,7 @@ class ar_tag_lane_controller(object):
         for tag_detection in tag_msg.detections:
             tag_id = int(tag_detection.id)
             z_pos = tag_detection.pose.pose.position.z
-            if z_pos < 0.3:
+            if z_pos < self.stop_dist:
                 self.publishCmd(self.stop_msg)
                 rospy.loginfo("Found z pos to be %f" %(z_pos))
                 self.found_obstacle = True
