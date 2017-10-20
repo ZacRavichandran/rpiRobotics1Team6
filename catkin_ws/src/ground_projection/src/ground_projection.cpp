@@ -228,6 +228,7 @@ private:
       image2ground(msg_new.segments[i].pixels_normalized[1], msg_new.segments[i].points[1]);
     }
     pub_lineseglist_.publish(msg_new);
+    ROS_INFO("ground_projection_logging callback");
   }
 
   bool get_ground_coordinate_cb(ground_projection::GetGroundCoord::Request &req, 

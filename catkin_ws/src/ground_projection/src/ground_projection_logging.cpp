@@ -31,7 +31,7 @@ void operator >> (const YAML::Node& node, T& i)
 }
 #endif
 
-class GroundProjection
+class GroundProjectionLogging
 {
   ros::NodeHandle nh_;
   ros::ServiceServer service_homog_;
@@ -51,7 +51,7 @@ class GroundProjection
   std::string h_file_;
   
 public:
-  GroundProjection()
+  GroundProjectionLogging()
   : nh_("~")
   {
 
@@ -99,18 +99,18 @@ public:
     pub_lineseglist_ = nh_.advertise<duckietown_msgs::SegmentList>("lineseglist_out", 1);
 
     // Ready the services
-    service_homog_ = nh_.advertiseService("estimate_homography", &GroundProjection::estimate_homography_cb, this);
+    service_homog_ = nh_.advertiseService("estimate_homography", &GroundProjectionLogging::estimate_homography_cb, this);
     ROS_INFO("estimate_homography is ready.");
-    service_gnd_coord_ = nh_.advertiseService("get_ground_coordinate", &GroundProjection::get_ground_coordinate_cb, this);
+    service_gnd_coord_ = nh_.advertiseService("get_ground_coordinate", &GroundProjectionLogging::get_ground_coordinate_cb, this);
     ROS_INFO("get_ground_coordinate is ready.");
-    service_img_coord_  = nh_.advertiseService("get_image_coordinate", &GroundProjection::get_image_coordinate_cb, this);
+    service_img_coord_  = nh_.advertiseService("get_image_coordinate", &GroundProjectionLogging::get_image_coordinate_cb, this);
     ROS_INFO("get_image_coordinate is ready.");
 
     // Subscriber
-    sub_lineseglist_ = nh_.subscribe("lineseglist_in", 1, &GroundProjection::lineseglist_cb, this);
+    sub_lineseglist_ = nh_.subscribe("lineseglist_in", 1, &GroundProjectionLogging::lineseglist_cb, this);
   }
 
-  ~GroundProjection()
+  ~GroundProjectionLogging()
   {
   }
 
@@ -228,7 +228,7 @@ private:
       image2ground(msg_new.segments[i].pixels_normalized[1], msg_new.segments[i].points[1]);
     }
     pub_lineseglist_.publish(msg_new);
-    ROS_INFO("ground_projection_logging callback")
+    ROS_INFO("ground_projection_logging callback");
 
   }
 
@@ -470,7 +470,7 @@ int main(int argc, char **argv)
 {
   ros::init(argc, argv, "ground_projection_logging");
 
-  GroundProjection gp;
+  GroundProjectionLogging gp;
 
   ros::spin();
 
