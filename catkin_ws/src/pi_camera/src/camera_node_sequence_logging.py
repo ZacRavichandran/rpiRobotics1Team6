@@ -162,7 +162,7 @@ class CameraNode(object):
 
 if __name__ == '__main__': 
     rospy.init_node('camera_logging',anonymous=False)
-    camera_node = CameraNode()
-    rospy.on_shutdown(camera_node.onShutdown)
-    thread.start_new_thread(camera_node.startCapturing, ())
+    camera_logging_node = CameraNode()
+    rospy.on_shutdown(camera_logging_node.onShutdown)
+    thread.start_new_thread(camera_logging_node.startCapturing, ())
     rospy.spin()

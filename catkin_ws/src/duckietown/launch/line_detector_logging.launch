@@ -22,7 +22,7 @@
 	</include>
 
 	<!-- Line Detector -->
-	<remap from="line_detector_logging_node/image" to="camera_node/image/compressed"/>
+	<remap from="line_detector_logging_node/image" to="camera_logging_node/image/compressed"/>
 	<include file="$(find line_detector)/launch/line_detector_logging_node.launch">
 	    <arg name="veh" value="$(arg veh)"/>
 	    <arg name="local" value="$(arg local)"/>
