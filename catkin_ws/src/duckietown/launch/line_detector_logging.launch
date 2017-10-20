@@ -11,7 +11,7 @@
     <arg name="line_detector_param_file_name" default='default' />
 
 	<!-- Camera -->
-	<include if="$(arg camera)" file="$(find duckietown)/launch/camera.launch">
+	<include if="$(arg camera)" file="$(find duckietown)/launch/camera_logging.launch">
 		<arg name="veh" value="$(arg veh)"/>
 		<arg name="local" value="$(arg local)"/>
 		<arg name="config" value="$(arg config)"/>
