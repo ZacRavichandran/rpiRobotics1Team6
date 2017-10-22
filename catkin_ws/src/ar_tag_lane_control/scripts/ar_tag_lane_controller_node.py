@@ -137,6 +137,7 @@ class ar_tag_lane_controller(object):
         if not self.found_obstacle:
             self.publishCmd(car_control_msg)
 
+        rospy.loginfo("ar_lane_lane_control pose callback")
         # debuging
         #self.pub_counter += 1
         #if self.pub_counter % 50 == 0:
@@ -145,7 +146,7 @@ class ar_tag_lane_controller(object):
         #    print car_control_msg
 
     def cbTags(self, tag_msg):
-        rospy.loginfo("ar_tag_lane_control tag callback")
+        rospy.loginfo("ar_tag_lane_control ar tag callback")
         self.found_obstacle = False
         for tag_detection in tag_msg.detections:
             tag_id = int(tag_detection.id)
