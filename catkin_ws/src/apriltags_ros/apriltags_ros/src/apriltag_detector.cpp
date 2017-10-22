@@ -50,6 +50,8 @@ namespace apriltags_ros{
   }
   
   void AprilTagDetector::imageCb(const sensor_msgs::ImageConstPtr& msg,const sensor_msgs::CameraInfoConstPtr& cam_info){
+    // added callback for logging
+    ROS_INFO("aptril_tag_detector iamge callback");
     cv_bridge::CvImagePtr cv_ptr;
     try{
       cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
