@@ -14,7 +14,7 @@ import sys
 import rospkg
 import os.path
 import yaml
-from duckietown_msgs.msg import BoolStamped
+from duckietown_msgs.msg import BoolStampedfrom, WheelsCmdStamped
 import thread
 
 class CameraNode(object):
@@ -53,6 +53,9 @@ class CameraNode(object):
         self.srv_set_camera_info = rospy.Service("~set_camera_info",SetCameraInfo,self.cbSrvSetCameraInfo)
 
         self.stream = io.BytesIO()
+
+        # for wheels callback
+        self.wheels_cmd_executed = rospy.Subscriber("~wheels_cmd_executed", WheelsCmdStamped, self.wheels_cmd_cb, queue_size=1)
  
 #self.camera.exposure_mode = 'off'
        # self.camera.awb_mode = 'off'
@@ -61,6 +64,9 @@ class CameraNode(object):
         self.update_framerate = False
         # Setup timer
         rospy.loginfo("[%s] Initialized." %(self.node_name))
+
+    def wheels_cmd_cb(self, wheels_cmd_msg):
+        rospy.loginfo("wheels command executed")
 
     def cbSwitchHigh(self, switch_msg):
         print switch_msg
