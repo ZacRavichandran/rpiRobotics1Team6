@@ -81,7 +81,8 @@ class CameraNode(object):
     def capture_image(self):
         gen =  self.grabAndPublish(self.stream,self.pub_img)
         try:
-            self.camera.capture_sequence(gen,'jpeg',use_video_port=True,splitter_port=0)
+            pass
+            #self.camera.capture_sequence(gen,'jpeg',use_video_port=True,splitter_port=0)
         except StopIteration:
             pass
         self.camera.framerate = self.framerate
