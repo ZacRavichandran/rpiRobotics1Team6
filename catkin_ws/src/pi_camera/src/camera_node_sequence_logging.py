@@ -66,7 +66,8 @@ class CameraNode(object):
         rospy.loginfo("[%s] Initialized." %(self.node_name))
 
     def wheels_cmd_cb(self, wheels_cmd_msg):
-        rospy.loginfo("wheels command executed")
+        rospy.loginfo("wheels command executed, capturing image")
+        self.capture_image()
 
     def cbSwitchHigh(self, switch_msg):
         print switch_msg
@@ -76,6 +77,15 @@ class CameraNode(object):
         elif not switch_msg.data and self.framerate != self.framerate_low:
             self.framerate = self.framerate_low
             self.update_framerate = True
+
+    def capture_image(self):
+        gen =  self.grabAndPublish(self.stream,self.pub_img)
+        try:
+            self.camera.capture_sequence(gen,'jpeg',use_video_port=True,splitter_port=0)
+        except StopIteration:
+            pass
+        self.camera.framerate = self.framerate
+        self.update_framerate=False
  
     def startCapturing(self):
         rospy.loginfo("[%s] Start capturing." %(self.node_name))
@@ -132,6 +142,7 @@ class CameraNode(object):
         rospy.loginfo("[%s] Closing camera." %(self.node_name))
         self.is_shutdown=True
         rospy.loginfo("[%s] Shutdown." %(self.node_name))
+        self.camera.close()
 
 
     def cbSrvSetCameraInfo(self,req):
@@ -170,5 +181,6 @@ if __name__ == '__main__':
     rospy.init_node('camera_logging',anonymous=False)
     camera_logging_node = CameraNode()
     rospy.on_shutdown(camera_logging_node.onShutdown)
-    thread.start_new_thread(camera_logging_node.startCapturing, ())
+    #thread.start_new_thread(camera_logging_node.startCapturing, ())
+    camera_logging_node.capture_image()
     rospy.spin()

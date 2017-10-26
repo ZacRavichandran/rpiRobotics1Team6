@@ -22,7 +22,7 @@
     </group>
 
     <!-- lane filter -->
-    <remap from="camera_node_logging/wheels_cmd_executed" to="wheels_driver_logging_node/wheels_cmd_executed"/>
+    <remap from="camera_logging_node/wheels_cmd_executed" to="wheels_driver_logging_node/wheels_cmd_executed"/>
     <include file="$(find duckietown)/launch/lane_filter_logging.launch">
     	     <arg name="veh" value="$(arg veh)"/>
 	     <arg name="local" value="$(arg local)"/>
