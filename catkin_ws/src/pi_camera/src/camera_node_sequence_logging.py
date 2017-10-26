@@ -67,7 +67,7 @@ class CameraNode(object):
 
     def wheels_cmd_cb(self, wheels_cmd_msg):
         rospy.loginfo("wheels command executed, capturing image")
-        self.capture_image()
+        self.grab_one_image()
 
     def cbSwitchHigh(self, switch_msg):
         print switch_msg
@@ -132,6 +132,33 @@ class CameraNode(object):
                 self.has_published = True
 
             rospy.sleep(rospy.Duration.from_sec(0.001))
+    def grab_one_image(self, stream, publisher):
+        yield stream
+        # Construct image_msg
+        # Grab image from stream
+        stamp = rospy.Time.now()
+        stream.seek(0)
+        stream_data = stream.getvalue()
+        # Generate compressed image
+        image_msg = CompressedImage()
+        image_msg.format = "jpeg"
+        image_msg.data = stream_data
+
+        image_msg.header.stamp = stamp
+        image_msg.header.frame_id = self.frame_id
+        publisher.publish(image_msg)
+
+        # log
+        rospy.loginfo("camera_logging published image")
+                    
+        # Clear stream
+        stream.seek(0)
+        stream.truncate()
+        
+        if not self.has_published:
+            rospy.loginfo("[%s] Published the first image." %(self.node_name))
+            self.has_published = True
+
 
     def setupParam(self,param_name,default_value):
         value = rospy.get_param(param_name,default_value)
@@ -183,5 +210,5 @@ if __name__ == '__main__':
     camera_logging_node = CameraNode()
     rospy.on_shutdown(camera_logging_node.onShutdown)
     #thread.start_new_thread(camera_logging_node.startCapturing, ())
-    camera_logging_node.capture_image()
+    camera_logging_node.wheels_cmd_cb()
     rospy.spin()
