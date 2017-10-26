@@ -14,7 +14,7 @@ import sys
 import rospkg
 import os.path
 import yaml
-from duckietown_msgs.msg import BoolStampedfrom, WheelsCmdStamped
+from duckietown_msgs.msg import BoolStamped, WheelsCmdStamped
 import thread
 
 class CameraNode(object):
