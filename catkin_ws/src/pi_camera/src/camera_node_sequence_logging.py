@@ -210,5 +210,5 @@ if __name__ == '__main__':
     camera_logging_node = CameraNode()
     rospy.on_shutdown(camera_logging_node.onShutdown)
     #thread.start_new_thread(camera_logging_node.startCapturing, ())
-    camera_logging_node.grab_one_image(self.stream,self.pub_img)
+    camera_logging_node.grab_one_image(camera_logging_node.stream, camera_logging_node.pub_img)
     rospy.spin()
