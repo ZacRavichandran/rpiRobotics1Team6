@@ -16,7 +16,7 @@
 	</include>
 
 	<!-- Lane Filter -->
-	<remap from="lane_filter_logging_node/segment_list" to="ground_projection/lineseglist_out"/>
+	<remap from="lane_filter_logging_node/segment_list" to="ground_projection_logging/lineseglist_out"/>
     <remap from="lane_filter_logging_node/velocity" to="forward_kinematics_node/velocity"/>
 	<include file="$(find lane_filter)/launch/lane_filter_logging_node.launch">
 	    <arg name="veh" value="$(arg veh)"/>
