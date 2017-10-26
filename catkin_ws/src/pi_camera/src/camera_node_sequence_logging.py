@@ -67,7 +67,7 @@ class CameraNode(object):
 
     def wheels_cmd_cb(self, wheels_cmd_msg):
         rospy.loginfo("wheels command executed, capturing image")
-        self.grab_one_image()
+        self.grab_one_image(self.stream,self.pub_img)
 
     def cbSwitchHigh(self, switch_msg):
         print switch_msg
@@ -210,5 +210,5 @@ if __name__ == '__main__':
     camera_logging_node = CameraNode()
     rospy.on_shutdown(camera_logging_node.onShutdown)
     #thread.start_new_thread(camera_logging_node.startCapturing, ())
-    camera_logging_node.grab_one_image()()
+    camera_logging_node.grab_one_image(self.stream,self.pub_img)
     rospy.spin()
