@@ -94,7 +94,10 @@ class CameraNode(object):
     def startCapturing(self):
         self.loop_complete = True
         rospy.loginfo("[%s] Start capturing." %(self.node_name))
-        while not self.is_shutdown and not rospy.is_shutdown() and self.loop_complete:
+        while not self.is_shutdown and not rospy.is_shutdown():
+            if not self.loop_complete:
+                rospy.loginfo("loop not complete - passing")
+                pass
             rospy.loginfo("started startCapturing")
             gen =  self.grabAndPublish(self.stream,self.pub_img)
             try:
