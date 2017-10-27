@@ -65,9 +65,12 @@ class CameraNode(object):
         # Setup timer
         rospy.loginfo("[%s] Initialized." %(self.node_name))
 
+        self.loop_complete = False
+
     def wheels_cmd_cb(self, wheels_cmd_msg):
-        rospy.loginfo("wheels command executed, capturing image")
-        self.grab_one_image(self.stream,self.pub_img)
+        rospy.loginfo("wheels command executed")
+        self.loop_complete = True
+        #self.grab_one_image(self.stream,self.pub_img)
 
     def cbSwitchHigh(self, switch_msg):
         print switch_msg
@@ -105,8 +108,9 @@ class CameraNode(object):
         rospy.loginfo("[%s] Capture Ended." %(self.node_name))
 
     def grabAndPublish(self,stream,publisher):
+        self.loop_complete = True
         rospy.loginfo("Started grabAndPublish")
-        while not self.update_framerate and not self.is_shutdown and not rospy.is_shutdown(): 
+        while not self.update_framerate and not self.is_shutdown and not rospy.is_shutdown() and self.loop_complete: 
             yield stream
             # Construct image_msg
             # Grab image from stream
@@ -133,7 +137,9 @@ class CameraNode(object):
                 rospy.loginfo("[%s] Published the first image." %(self.node_name))
                 self.has_published = True
 
-            rospy.sleep(rospy.Duration.from_sec(0.001))
+            #rospy.sleep(rospy.Duration.from_sec(0.001))
+            self.loop_complete = False
+
     def grab_one_image(self, stream, publisher):
         yield stream
         # Construct image_msg
@@ -211,8 +217,8 @@ if __name__ == '__main__':
     rospy.init_node('camera_logging',anonymous=False)
     camera_logging_node = CameraNode()
     rospy.on_shutdown(camera_logging_node.onShutdown)
-    #thread.start_new_thread(camera_logging_node.startCapturing, ())
+    thread.start_new_thread(camera_logging_node.startCapturing, ())
     rospy.loginfo("camera init started")
-    camera_logging_node.grab_one_image(camera_logging_node.stream, camera_logging_node.pub_img)
+    #camera_logging_node.grab_one_image(camera_logging_node.stream, camera_logging_node.pub_img)
     rospy.loginfo("camera init finished")
     rospy.spin()
