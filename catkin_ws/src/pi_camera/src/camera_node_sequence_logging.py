@@ -117,18 +117,19 @@ class CameraNode(object):
                 break
 
         #self.camera.close()
-        #rospy.loginfo("[%s] Capture Ended." %(self.node_name))
+        rospy.loginfo("[%s] Capture Ended." %(self.node_name))
 
     def grabAndPublish(self,stream,publisher):
         rospy.loginfo("Started grabAndPublish: %s, %d" %(self.loop_complete, self.waiting_on_loop_count))
-        if not self.loop_complete:
+        '''if not self.loop_complete:
             self.waiting_on_loop_count += 1
         else:
             self.waiting_on_loop_count = 0
         if self.waiting_on_loop_count > 20:
             self.loop_complete = True
             self.waiting_on_loop_count = 0
-        while not self.update_framerate and not self.is_shutdown and not rospy.is_shutdown() and self.loop_complete: 
+            '''
+        while not self.update_framerate and not self.is_shutdown and not rospy.is_shutdown(): # and self.loop_complete: 
             yield stream
             # Construct image_msg
             # Grab image from stream
