@@ -67,11 +67,13 @@ class CameraNode(object):
 
         self.loop_complete = False
         self.waiting_on_loop_count = 0
+        self.loop_init = False
 
     def wheels_cmd_cb(self, wheels_cmd_msg):
         rospy.loginfo("wheels command executed")
         self.loop_complete = True
         self.grabAndPublish(self.stream,self.pub_img)
+        self.loop_init = True
         #self.grab_one_image(self.stream,self.pub_img)
 
     def cbSwitchHigh(self, switch_msg):
@@ -110,7 +112,9 @@ class CameraNode(object):
             print "updating framerate"
             self.camera.framerate = self.framerate
             self.update_framerate=False
-            rospy.sleep(rospy.Duration.from_sec(5))
+
+            if self.loop_init:
+                break
 
         self.camera.close()
         rospy.loginfo("[%s] Capture Ended." %(self.node_name))
