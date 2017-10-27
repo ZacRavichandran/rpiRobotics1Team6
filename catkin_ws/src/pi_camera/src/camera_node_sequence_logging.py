@@ -71,7 +71,7 @@ class CameraNode(object):
 
     def wheels_cmd_cb(self, wheels_cmd_msg):
         self.loop_init = True
-        rospy.loginfo("wheels command executed")
+        #rospy.loginfo("wheels command executed")
         self.loop_complete = True
         self.grabAndPublish(self.stream,self.pub_img)
         #self.grab_one_image(self.stream,self.pub_img)
@@ -104,7 +104,7 @@ class CameraNode(object):
                 rospy.loginfo("loop not complete - passing")
                 pass
             '''
-            rospy.loginfo("started startCapturing")
+            #rospy.loginfo("started startCapturing")
             gen =  self.grabAndPublish(self.stream,self.pub_img)
             try:
                 self.camera.capture_sequence(gen,'jpeg',use_video_port=True,splitter_port=0)
@@ -118,7 +118,7 @@ class CameraNode(object):
         rospy.loginfo("[%s] Capture Ended." %(self.node_name))
 
     def grabAndPublish(self,stream,publisher):
-        rospy.loginfo("Started grabAndPublish: %s, %d" %(self.loop_complete, self.waiting_on_loop_count))
+        #rospy.loginfo("Started grabAndPublish: %s, %d" %(self.loop_complete, self.waiting_on_loop_count))
         '''if not self.loop_complete:
             self.waiting_on_loop_count += 1
         else:
