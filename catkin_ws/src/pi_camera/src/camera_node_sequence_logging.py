@@ -55,7 +55,7 @@ class CameraNode(object):
         self.stream = io.BytesIO()
 
         # for wheels callback
-        self.wheels_cmd_executed = rospy.Subscriber("~wheels_cmd_executed", WheelsCmdStamped, self.wheels_cmd_cb, queue_size=1)
+        #self.wheels_cmd_executed = rospy.Subscriber("~wheels_cmd_executed", WheelsCmdStamped, self.wheels_cmd_cb, queue_size=1)
  
 #self.camera.exposure_mode = 'off'
        # self.camera.awb_mode = 'off'
@@ -156,7 +156,6 @@ class CameraNode(object):
 
             rospy.sleep(rospy.Duration.from_sec(0.001))
             self.loop_complete = False
-            break
 
     def grab_one_image(self, stream, publisher):
         yield stream
