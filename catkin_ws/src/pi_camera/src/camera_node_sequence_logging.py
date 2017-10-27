@@ -98,7 +98,7 @@ class CameraNode(object):
     def startCapturing(self):
         self.loop_complete = True
         rospy.loginfo("[%s] Start capturing." %(self.node_name))
-        while not self.is_shutdown and not rospy.is_shutdown():
+        while not self.is_shutdown and not rospy.is_shutdown() and not self.loop_init:
             '''if not self.loop_complete:
                 rospy.loginfo("loop not complete - passing")
                 pass
@@ -112,9 +112,6 @@ class CameraNode(object):
             print "updating framerate"
             self.camera.framerate = self.framerate
             self.update_framerate=False
-
-            if self.loop_init:
-                break
 
         #self.camera.close()
         rospy.loginfo("[%s] Capture Ended." %(self.node_name))
