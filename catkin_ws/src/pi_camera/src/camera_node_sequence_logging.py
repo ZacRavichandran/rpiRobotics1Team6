@@ -155,6 +155,7 @@ class CameraNode(object):
 
             rospy.sleep(rospy.Duration.from_sec(0.001))
             self.loop_complete = False
+            break
 
     def grab_one_image(self, stream, publisher):
         yield stream
