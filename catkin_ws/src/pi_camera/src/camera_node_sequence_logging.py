@@ -66,6 +66,7 @@ class CameraNode(object):
         rospy.loginfo("[%s] Initialized." %(self.node_name))
 
         self.loop_complete = False
+        self.waiting_on_loop_count = 0
 
     def wheels_cmd_cb(self, wheels_cmd_msg):
         rospy.loginfo("wheels command executed")
@@ -113,7 +114,14 @@ class CameraNode(object):
         rospy.loginfo("[%s] Capture Ended." %(self.node_name))
 
     def grabAndPublish(self,stream,publisher):
-        rospy.loginfo("Started grabAndPublish: %s" %(self.loop_complete))
+        rospy.loginfo("Started grabAndPublish: %s, %d" %(self.loop_complete, self.waiting_on_loop_count))
+        if not self.loop_complete:
+            self.waiting_on_loop_count += 1
+        else:
+            self.waiting_on_loop_count = 0
+        if self.waiting_on_loop_count > 20:
+            self.loop_complete = True
+            self.waiting_on_loop_count = 0
         while not self.update_framerate and not self.is_shutdown and not rospy.is_shutdown() and self.loop_complete: 
             yield stream
             # Construct image_msg
