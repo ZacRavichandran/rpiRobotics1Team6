@@ -110,6 +110,7 @@ class CameraNode(object):
             print "updating framerate"
             self.camera.framerate = self.framerate
             self.update_framerate=False
+            rospy.sleep(rospy.Duration.from_sec(5))
 
         self.camera.close()
         rospy.loginfo("[%s] Capture Ended." %(self.node_name))
