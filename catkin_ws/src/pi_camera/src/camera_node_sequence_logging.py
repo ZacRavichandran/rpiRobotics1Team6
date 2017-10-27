@@ -70,10 +70,10 @@ class CameraNode(object):
         self.loop_init = False
 
     def wheels_cmd_cb(self, wheels_cmd_msg):
+        self.loop_init = True
         rospy.loginfo("wheels command executed")
         self.loop_complete = True
         self.grabAndPublish(self.stream,self.pub_img)
-        self.loop_init = True
         #self.grab_one_image(self.stream,self.pub_img)
 
     def cbSwitchHigh(self, switch_msg):
