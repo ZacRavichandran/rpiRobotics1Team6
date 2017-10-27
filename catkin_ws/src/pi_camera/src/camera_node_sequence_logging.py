@@ -92,12 +92,13 @@ class CameraNode(object):
         self.update_framerate=False
  
     def startCapturing(self):
-        self.loop_complete = True
+        #self.loop_complete = True
         rospy.loginfo("[%s] Start capturing." %(self.node_name))
         while not self.is_shutdown and not rospy.is_shutdown():
-            if not self.loop_complete:
+            '''if not self.loop_complete:
                 rospy.loginfo("loop not complete - passing")
                 pass
+            '''
             rospy.loginfo("started startCapturing")
             gen =  self.grabAndPublish(self.stream,self.pub_img)
             try:
@@ -113,7 +114,7 @@ class CameraNode(object):
 
     def grabAndPublish(self,stream,publisher):
         rospy.loginfo("Started grabAndPublish")
-        while not self.update_framerate and not self.is_shutdown and not rospy.is_shutdown() and self.loop_complete: 
+        while not self.update_framerate and not self.is_shutdown and not rospy.is_shutdown(): # and self.loop_complete: 
             yield stream
             # Construct image_msg
             # Grab image from stream
@@ -140,8 +141,8 @@ class CameraNode(object):
                 rospy.loginfo("[%s] Published the first image." %(self.node_name))
                 self.has_published = True
 
-            #rospy.sleep(rospy.Duration.from_sec(0.001))
-            self.loop_complete = False
+            rospy.sleep(rospy.Duration.from_sec(0.001))
+            #self.loop_complete = False
 
     def grab_one_image(self, stream, publisher):
         yield stream
