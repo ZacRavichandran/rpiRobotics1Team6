@@ -116,8 +116,8 @@ class CameraNode(object):
             if self.loop_init:
                 break
 
-        self.camera.close()
-        rospy.loginfo("[%s] Capture Ended." %(self.node_name))
+        #self.camera.close()
+        #rospy.loginfo("[%s] Capture Ended." %(self.node_name))
 
     def grabAndPublish(self,stream,publisher):
         rospy.loginfo("Started grabAndPublish: %s, %d" %(self.loop_complete, self.waiting_on_loop_count))
