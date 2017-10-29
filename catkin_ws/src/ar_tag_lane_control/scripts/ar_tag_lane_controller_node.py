@@ -167,7 +167,7 @@ class ar_tag_lane_controller(object):
                 self.found_obstacle = True
                 rospy.loginfo("Found z pos to be %f - stopping" %(z_pos))
             elif z_pos < self.slow_down_dist:
-                self.current_v = v_bar / 2
+                self.current_v = self.v_bar / 2
                 rospy.loginfo("Found z pos to be %f - slowing down" %(z_pos))
             elif z_pos >= self.slow_down_dist and self.current_v != self.v_bar:
                 self.current_v = self.v_bar
