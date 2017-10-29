@@ -31,7 +31,9 @@ class ar_tag_lane_controller(object):
         self.stop_msg = self.get_stop_msg()
         self.found_obstacle = False
 
-        self.stop_dist = 1
+        self.stop_dist = 0.5
+        self.slow_down_dist = 1
+        self.current_v = self.v_bar
 
 
     def get_stop_msg(self):
@@ -39,6 +41,12 @@ class ar_tag_lane_controller(object):
         stop_msg.v = 0.0
         stop_msg.omega = 0.0
         return stop_msg
+
+    def get_msg(self, v, omega):
+        stop_msg = Twist2DStamped()
+        stop_msg.v = v
+        stop_msg.omega = omega
+        return stop_msg      
 
     def setupParameter(self,param_name,default_value):
         value = rospy.get_param(param_name,default_value)
@@ -124,7 +132,7 @@ class ar_tag_lane_controller(object):
         car_control_msg.header = lane_pose_msg.header
 	
 	   # added stop flag
-        car_control_msg.v = self.v_bar  #*self.speed_gain #Left stick V-axis. Up is positive
+        car_control_msg.v = self.current_v  #*self.speed_gain #Left stick V-axis. Up is positive
         
         if math.fabs(cross_track_err) > self.d_thres:
             cross_track_err = cross_track_err / math.fabs(cross_track_err) * self.d_thres
@@ -148,15 +156,22 @@ class ar_tag_lane_controller(object):
     def cbTags(self, tag_msg):
         rospy.loginfo("ar_tag_lane_control ar tag callback")
         self.found_obstacle = False
+        self.process_tags(tag_msg)
+
+    def process_tags(self, tag_msg):
         for tag_detection in tag_msg.detections:
             tag_id = int(tag_detection.id)
             z_pos = tag_detection.pose.pose.position.z
             if z_pos < self.stop_dist:
                 self.publishCmd(self.stop_msg)
-                rospy.loginfo("Found z pos to be %f" %(z_pos))
                 self.found_obstacle = True
-            #print("X pos: %d" % (x_pos))
-            #TODO get header position
+                rospy.loginfo("Found z pos to be %f - stopping" %(z_pos))
+            elif z_pos < self.slow_down_dist:
+                self.current_v = v_bar / 2
+                rospy.loginfo("Found z pos to be %f - slowing down" %(z_pos))
+            elif z_pos >= self.slow_down_dist and self.current_v != self.v_bar:
+                self.current_v = self.v_bar
+                rospy.loginfo("Found z pos to be %f - speeding up" %(z_pos))
 
 
 if __name__ == "__main__":
