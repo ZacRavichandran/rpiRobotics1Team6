@@ -154,7 +154,7 @@ class CameraNode(object):
                 rospy.loginfo("[%s] Published the first image." %(self.node_name))
                 self.has_published = True
 
-            rospy.sleep(rospy.Duration.from_sec(0.001))
+            #rospy.sleep(rospy.Duration.from_sec(0.001))
             self.loop_complete = False
             break
 
