@@ -145,7 +145,7 @@ class ar_tag_lane_controller(object):
         if not self.found_obstacle:
             self.publishCmd(car_control_msg)
 
-        rospy.loginfo("ar_lane_lane_control pose callback")
+        #rospy.loginfo("ar_lane_lane_control pose callback")
         # debuging
         #self.pub_counter += 1
         #if self.pub_counter % 50 == 0:
@@ -154,7 +154,7 @@ class ar_tag_lane_controller(object):
         #    print car_control_msg
 
     def cbTags(self, tag_msg):
-        rospy.loginfo("ar_tag_lane_control ar tag callback")
+        #rospy.loginfo("ar_tag_lane_control ar tag callback")
         self.found_obstacle = False
         self.process_tags(tag_msg)
 
@@ -173,8 +173,8 @@ class ar_tag_lane_controller(object):
                 self.current_v = self.v_bar
                 rospy.loginfo("Found z pos to be %f - speeding up" %(z_pos))
 
-
 if __name__ == "__main__":
     rospy.init_node("ar_tag_lane_controller",anonymous=False)
     lane_control_node = ar_tag_lane_controller()
     rospy.spin()
+    
