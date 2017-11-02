@@ -159,6 +159,7 @@ class ar_tag_lane_controller(object):
         self.process_tags(tag_msg)
 
     def process_tags(self, tag_msg):
+	self.current_v = self.v_bar
         for tag_detection in tag_msg.detections:
             tag_id = int(tag_detection.id)
             z_pos = tag_detection.pose.pose.position.z
@@ -169,7 +170,7 @@ class ar_tag_lane_controller(object):
             elif z_pos < self.slow_down_dist:
                 self.current_v = self.v_bar / 2
                 rospy.loginfo("Found z pos to be %f - slowing down" %(z_pos))
-            elif z_pos >= self.slow_down_dist and self.current_v != self.v_bar:
+            elif z_pos >= self.slow_down_dist:
                 self.current_v = self.v_bar
                 rospy.loginfo("Found z pos to be %f - speeding up" %(z_pos))
 
