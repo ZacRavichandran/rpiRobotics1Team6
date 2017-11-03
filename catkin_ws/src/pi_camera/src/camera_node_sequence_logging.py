@@ -99,7 +99,7 @@ class CameraNode(object):
         rospy.loginfo("[%s] Start capturing." %(self.node_name))
         while not self.is_shutdown and not rospy.is_shutdown():
         
-            if self.loop_complete
+            if self.loop_complete:
                 rospy.loginfo("loop complete - passing")
                 continue
             
