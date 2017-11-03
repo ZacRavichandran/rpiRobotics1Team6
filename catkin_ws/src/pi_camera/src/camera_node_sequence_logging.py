@@ -101,7 +101,7 @@ class CameraNode(object):
         
             if self.loop_complete
                 rospy.loginfo("loop complete - passing")
-                pass
+                continue
             
             rospy.loginfo("started startCapturing")
             gen =  self.grabAndPublish(self.stream,self.pub_img)
