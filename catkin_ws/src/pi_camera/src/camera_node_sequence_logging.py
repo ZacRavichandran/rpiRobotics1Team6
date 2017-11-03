@@ -100,14 +100,15 @@ class CameraNode(object):
         while not self.is_shutdown and not rospy.is_shutdown():            
             rospy.loginfo("started startCapturing")
             gen =  self.grabAndPublish(self.stream,self.pub_img)
+            '''
             try:
                 self.camera.capture_sequence(gen,'jpeg',use_video_port=True,splitter_port=0)
             except StopIteration:
                 pass
+            '''
             print "updating framerate"
             self.camera.framerate = self.framerate
             self.update_framerate=False
-            time.sleep(5)
 
 
         #self.camera.close()
