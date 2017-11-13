@@ -10,7 +10,7 @@ class ObstacleDetectorNode(object):
 		self.sub_image = rospy.Subscriber("image_rect", Image, self.cbImage, queue_size=1)
 		self.pub_visualize = rospy.Publisher("~tag_detections", PoseStamped, queue_size=1)
 
-	def cbImage(self):
+	def cbImage(self, image):
 		pass
 
 
