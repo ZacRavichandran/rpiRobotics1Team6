@@ -26,6 +26,7 @@ class lane_controller(object):
         # timer
         self.gains_timer = rospy.Timer(rospy.Duration.from_sec(1.0), self.getGains_event)
         rospy.loginfo("[%s] Initialized " %(rospy.get_name()))
+        self.found_obstacle = False
 
     def setupParameter(self,param_name,default_value):
         value = rospy.get_param(param_name,default_value)
@@ -36,10 +37,10 @@ class lane_controller(object):
     def setGains(self):
         v_bar = 0.5 # nominal speed, 0.5m/s
         k_theta = -2.0
-        k_d = - (k_theta ** 2) / ( 4.0 * v_bar)
+        k_d = - (k_theta ** 2) / ( 4.0 * v_bar) #k_d=-2
         theta_thres = math.pi / 6
-        d_thres = math.fabs(k_theta / k_d) * theta_thres
-        d_offset = 0.0
+        d_thres = math.fabs(k_theta / k_d) * theta_thres #d_thres=pi/6
+        d_offset = 1.0
 
         self.v_bar = self.setupParameter("~v_bar",v_bar) # Linear velocity
         self.k_d = self.setupParameter("~k_d",k_theta) # P gain for theta
@@ -103,10 +104,15 @@ class lane_controller(object):
 
     def cbPose(self,lane_pose_msg):
         self.lane_reading = lane_pose_msg 
-
+        if self.found_obstacle:
+            
         cross_track_err = lane_pose_msg.d - self.d_offset
         heading_err = lane_pose_msg.phi
-
+        
+        elif
+        cross_track_err = lane_pose_msg.d - 0.0
+        heading_err = lane_pose_msg.phi
+        
         car_control_msg = Twist2DStamped()
         car_control_msg.header = lane_pose_msg.header
         car_control_msg.v = self.v_bar #*self.speed_gain #Left stick V-axis. Up is positive
@@ -120,6 +126,9 @@ class lane_controller(object):
         # print "controls: speed %f, steering %f" % (car_control_msg.speed, car_control_msg.steering)
         # self.pub_.publish(car_control_msg)
         self.publishCmd(car_control_msg)
+        
+        def process_tags(self, obstacledetect_msg)
+        
 
         # debuging
         # self.pub_counter += 1
