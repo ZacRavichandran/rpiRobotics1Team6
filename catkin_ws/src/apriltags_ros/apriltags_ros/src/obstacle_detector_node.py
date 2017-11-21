@@ -23,6 +23,7 @@ class ObstacleDetectorNode(object):
 		tag_detection.pose = tag_pose
 		tag_detection.id = placeholder_tag_id
 		tag_detection_array.detections.append(tag_detection)
+		rospy.loginfo("Image")
 		self.pub_visualize.publish(tag_detection_array)
 
 

@@ -60,6 +60,7 @@
     <!-- AprilTags Detections -->
     <remap from="image_rect" to="camera_node/image/rect" />
     <remap from="camera_node/image/camera_info" to="camera_node/raw_camera_info" />
+    <remap from="obstacle_detector_node/tag_detections" to="tag_detections"/>
     <include file="$(find apriltags_ros)/launch/obstacle_detector_node.launch">
         <arg name="veh" value="$(arg veh)"/>
         <arg name="local" value="$(arg image_processing_local)"/>
