@@ -18,7 +18,7 @@ class ObstacleDetectorNode(object):
 
 		tag_detection_array = AprilTagDetectionArray()
 		tag_pose = PoseStamped()
-		tag_detection.pose.position.z = placeholder_z
+		tag_pose.pose.position.z = placeholder_z
 		tag_detection = AprilTagDetection()
 		tag_detection.pose = tag_pose
 		tag_detection.id = placeholder_tag_id
