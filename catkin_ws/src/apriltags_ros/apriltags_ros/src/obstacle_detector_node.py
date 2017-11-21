@@ -18,9 +18,9 @@ class ObstacleDetectorNode(object):
 
 		tag_detection_array = AprilTagDetectionArray()
 		tag_pose = PoseStamped()
-		tag_pose.pose.position.z = placeholder_z
+		tag_detection.pose.position.z = placeholder_z
 		tag_detection = AprilTagDetection()
-		tag_detection.position = tag_pose
+		tag_detection.pose = tag_pose
 		tag_detection.id = placeholder_tag_id
 		tag_detection_array.detections.append(tag_detection)
 		self.pub_visualize.publish(tag_detection_array)
