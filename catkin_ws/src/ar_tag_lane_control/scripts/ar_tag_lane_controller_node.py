@@ -130,8 +130,12 @@ class ar_tag_lane_controller(object):
 
         car_control_msg = Twist2DStamped()
         car_control_msg.header = lane_pose_msg.header
-	
-	   # added stop flag
+
+        # reset speed if no obstacle found
+        if not self.found_obstacle:
+        	rospy.loginfo("No obstacles found, resetting speed")
+        	self.current_v = self.v_bar
+
         car_control_msg.v = self.current_v  #*self.speed_gain #Left stick V-axis. Up is positive
         
         if math.fabs(cross_track_err) > self.d_thres:
@@ -154,12 +158,12 @@ class ar_tag_lane_controller(object):
         #    print car_control_msg
 
     def cbTags(self, tag_msg):
-        #rospy.loginfo("ar_tag_lane_control ar tag callback")
+        rospy.loginfo("ar_tag_lane_control ar tag callback with %d tags" %(len(tag_msg.detections)))
         self.found_obstacle = False
         self.process_tags(tag_msg)
 
     def process_tags(self, tag_msg):
-	self.current_v = self.v_bar
+    	self.current_v = self.v_bar
         for tag_detection in tag_msg.detections:
             tag_id = int(tag_detection.id)
             z_pos = tag_detection.pose.pose.position.z
