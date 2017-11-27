@@ -5,14 +5,27 @@ from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import Image
 from duckietown_msgs.msg import AprilTagDetection 
 from duckietown_msgs.msg import AprilTagDetectionArray
+from sign_detector import find_stop_signs
+import numpy as np
+from rospy.numpy_msg import numpy_msg
+from cv_bridge import CvBridge
 
 class ObstacleDetectorNode(object):
 	def __init__(self):
 		self.node_name = "obstacle_detector_node"
-		self.sub_image = rospy.Subscriber("image_rect", Image, self.cbImage, queue_size=1)
+		self.sub_image = rospy.Subscriber("~image_rect", Image, self.cbImage, queue_size=1)
+		self.bridge = CvBridge()
 		self.pub_visualize = rospy.Publisher("~tag_detections", AprilTagDetectionArray, queue_size=1)
 
+	def find_signs(self, img):
+		rospy.loginfo("Image shape: " + str(img.shape))
+		find_stop_signs(img)
+
 	def cbImage(self, image):
+		#self.find_signs(np.array(image.data))
+		cv_image = self.bridge.imgmsg_to_cv2(image, "bgr8")
+		rospy.loginfo(cv_image.shape)
+
 		placeholder_z = 10
 		placeholder_tag_id = 0
 
