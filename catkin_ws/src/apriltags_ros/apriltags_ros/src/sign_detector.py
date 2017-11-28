@@ -103,7 +103,10 @@ def find_color(img, lower_color, upper_color, size):
 
 def find_stop_signs(img):
 	preprocessd_img, ratio, size = find_red(img)
-	im2, contours, hierarchy = cv2.findContours(preprocessd_img.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+	
+	contours, hierarchy = cv2.findContours(preprocessd_img.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+	
 	img, found_shapes = find_all_shapes(contours, img, ratio)
 
 	return found_shapes
+

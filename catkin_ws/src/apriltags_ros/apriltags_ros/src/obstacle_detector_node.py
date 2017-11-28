@@ -18,13 +18,18 @@ class ObstacleDetectorNode(object):
 		self.pub_visualize = rospy.Publisher("~tag_detections", AprilTagDetectionArray, queue_size=1)
 
 	def find_signs(self, img):
-		rospy.loginfo("Image shape: " + str(img.shape))
-		find_stop_signs(img)
+		shapes = find_stop_signs(img)
+
+		for shape in shapes:
+			if shape.shape >= 3 and shape.size > 0:
+				rospy.loginfo("Found shape: %d at (%dx%d) of size %d" % (shape.shape, shape.cx, shape.cy, shape.size))
+		print("<====>")
 
 	def cbImage(self, image):
 		#self.find_signs(np.array(image.data))
 		cv_image = self.bridge.imgmsg_to_cv2(image, "bgr8")
-		rospy.loginfo(cv_image.shape)
+		np_image = np.array(cv_image)
+		self.find_signs(np_image)
 
 		placeholder_z = 10
 		placeholder_tag_id = 0
@@ -36,7 +41,6 @@ class ObstacleDetectorNode(object):
 		tag_detection.pose = tag_pose
 		tag_detection.id = placeholder_tag_id
 		tag_detection_array.detections.append(tag_detection)
-		rospy.loginfo("Image")
 		self.pub_visualize.publish(tag_detection_array)
 
 
