@@ -9,6 +9,7 @@ from sign_detector import find_stop_signs, find_ducks
 import numpy as np
 from rospy.numpy_msg import numpy_msg
 from cv_bridge import CvBridge
+import cv2
 
 class ObstacleDetectorNode(object):
 	def __init__(self):
@@ -21,11 +22,23 @@ class ObstacleDetectorNode(object):
 	def find_signs(self, img):
 		shapes = find_stop_signs(img)
 
+		published = False
 		for shape in shapes:
-			if shape.shape >= 3 and shape.size > 0:
-				rospy.loginfo("Found shape: %d at (%dx%d) of size %d" % (shape.shape, shape.cx, shape.cy, shape.size))
-				self.make_and_publish_position_message(shape.cx, 0)
-		print("<====>")
+			(x, y, w, h) = cv2.boundingRect(shape.approx)
+			ar = w / float(h)
+			if shape.shape >= 3 and shape.size > 1000 and ar <= 1.05 and ar >= 0.7:
+				rospy.loginfo("Found shape: %d at (%dx%d) of size %d with %0.3f" % (shape.shape, shape.cx, shape.cy, shape.size, ar))
+				self.make_and_publish_position_message(0, 10)
+				published = True
+
+		# send signal nothing was found
+		if published == False:
+			self.make_and_publish_position_message(100, -1)
+			rospy.loginfo("Found nothing")
+			rospy.loginfo("x ====== x")
+		# print output for debugging
+		else:
+			rospy.loginfo("<====>")
 
 	def find_and_process_ducks(self, img):
 		shapes = find_ducks(img)
@@ -36,13 +49,13 @@ class ObstacleDetectorNode(object):
 				rospy.loginfo("Found potential duck of shape: %d at (%dx%d) of size %d" % (shape.shape, shape.cx, shape.cy, shape.size))
 		print("<====>")
 
-	def make_and_publish_position_message(self, z, id):
+	def make_and_publish_position_message(self, msg_z, msg_id):
 		tag_detection_array = AprilTagDetectionArray()
 		tag_pose = PoseStamped()
-		tag_pose.pose.position.z = placeholder_z
+		tag_pose.pose.position.z = msg_z
 		tag_detection = AprilTagDetection()
 		tag_detection.pose = tag_pose
-		tag_detection.id = placeholder_tag_id
+		tag_detection.id = msg_id
 		tag_detection_array.detections.append(tag_detection)
 		self.pub_visualize.publish(tag_detection_array)
 

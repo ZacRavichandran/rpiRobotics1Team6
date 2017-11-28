@@ -24,7 +24,7 @@ def detect(c):
 
 	shape = "unidentified"
 	peri = cv2.arcLength(c, True)
-	approx = cv2.approxPolyDP(c, 0.04* peri, True) # 0.04 * peri, True)
+	approx = cv2.approxPolyDP(c, 0.03* peri, True) # 0.04 * peri, True)
 
 	if len(approx) == 3:
 		shape = "triangle"
