@@ -26,7 +26,7 @@ class ObstacleDetectorNode(object):
 		for shape in shapes:
 			(x, y, w, h) = cv2.boundingRect(shape.approx)
 			ar = w / float(h)
-			if shape.shape >= 3 and shape.size > 1000 and ar <= 1.05 and ar >= 0.7:
+			if shape.size > 200 and ar >= 0.3: # shape.shape >= 3 and shape.size > 1000 and ar <= 1.05 and ar >= 0.7:
 				rospy.loginfo("Found shape: %d at (%dx%d) of size %d with %0.3f" % (shape.shape, shape.cx, shape.cy, shape.size, ar))
 				self.make_and_publish_position_message(0, 10)
 				published = True
