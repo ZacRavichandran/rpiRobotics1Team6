@@ -34,6 +34,7 @@ class ar_tag_lane_controller(object):
         self.stop_dist = 0.5
         self.slow_down_dist = 1
         self.current_v = self.v_bar
+        self.obstacle_x_position = 0
 
 
     def get_stop_msg(self):
@@ -140,6 +141,12 @@ class ar_tag_lane_controller(object):
         
         if math.fabs(cross_track_err) > self.d_thres:
             cross_track_err = cross_track_err / math.fabs(cross_track_err) * self.d_thres
+
+        if self.found_obstacle:
+            cross_track_err = cross_track_err - self.obstacle_x_position
+
+            rospy.loginfo("Found obstacle, changing d from %f to %f" %(cross_track_err + self.obstacle_x_position, cross_track_err))
+
         car_control_msg.omega =  self.k_d * cross_track_err + self.k_theta * heading_err #*self.steer_gain #Right stick H-axis. Right is negative
         
         # controller mapping issue
@@ -167,10 +174,13 @@ class ar_tag_lane_controller(object):
         for tag_detection in tag_msg.detections:
             tag_id = int(tag_detection.id)
             z_pos = tag_detection.pose.pose.position.z
+            x_pos = tag_detection.pose.pose.position.x 
+            y_pos = tag_detection.pose.pose.position.y
             if z_pos < self.stop_dist:
-                self.publishCmd(self.stop_msg)
+                #self.publishCmd(self.stop_msg)
                 self.found_obstacle = True
-                rospy.loginfo("Found z pos to be %f - stopping" %(z_pos))
+                rospy.loginfo("Found z pos to be (x,y,z) = (%f, %f, %f - swerving" %(x_pos, y_pos, z_pos))
+                self.obstacle_x_position = x_pos
             elif z_pos < self.slow_down_dist:
                 self.current_v = self.v_bar / 2
                 rospy.loginfo("Found z pos to be %f - slowing down" %(z_pos))
