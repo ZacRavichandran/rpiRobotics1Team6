@@ -130,8 +130,34 @@ class ar_tag_lane_controller(object):
         self.pub_car_cmd.publish(car_cmd_msg)
         #self.pub_wheels_cmd.publish(wheels_cmd_msg)
 
-    def cbPose(self,lane_pose_msg):
+    def avoidance_maneuver(self, header):
+        """
+        Maneuver around an obstacle
+        """
+        maneuver_time = 0.15
 
+        omega = 1.7
+        for i in range(10):
+            rospy.loginfo("chaining omega to %f" %(omega))
+            self.make_and_send_control_msg(header, self.v_bar, omega)
+            rospy.sleep(maneuver_time)
+            #cross_track_err = cross_track_err + 0.25
+        for j in range(10):
+            #cross_track_err = cross_track_err - 0.25   
+            rospy.loginfo("chaining omega to %f" % (-omega))
+            self.make_and_send_control_msg(header, self.v_bar, -omega)
+            rospy.sleep(maneuver_time)
+
+        self.found_obstacle = False
+
+    def make_and_send_control_msg(self, header, v, omega):
+        car_control_msg = Twist2DStamped()
+        car_control_msg.header = header 
+        car_control_msg.v = v
+        car_control_msg.omega = omega  
+        self.publishCmd(car_control_msg)
+
+    def cbPose(self,lane_pose_msg):
         self.current_v = self.v_bar
         self.lane_reading = lane_pose_msg 
 
@@ -151,34 +177,18 @@ class ar_tag_lane_controller(object):
         if math.fabs(cross_track_err) > self.d_thres:
             cross_track_err = cross_track_err / math.fabs(cross_track_err) * self.d_thres
 
-        self.maneuver_time = 15
-        if self.found_obstacle and self.avoidance_time <= self.maneuver_time:
-            self.avoidance_time += 1
-            #rospy.loginfo("lane reading: %f, ob: %f at %f" % (cross_track_err, self.obstacle_x_position, self.current_v))
-            avoidance_change = 10*self.k_o* (self.obstacle_x_position + np.sign(self.obstacle_x_position)*self.d_0)
-            cross_track_err = cross_track_err - avoidance_change
-            rospy.loginfo("Found obstacle, changing d from %f to %f for %f with %d"\
-             %(cross_track_err + avoidance_change, cross_track_err, avoidance_change, self.avoidance_time))
-
-        elif self.found_obstacle and self.avoidance_time > self.maneuver_time and self.avoidance_time <= 2*self.maneuver_time:
-            self.avoidance_time += 1
-            #rospy.loginfo("lane reading: %f, ob: %f at %f" % (cross_track_err, self.obstacle_x_position, self.current_v))
-            avoidance_change = 10*self.k_o* (self.obstacle_x_position + np.sign(self.obstacle_x_position)*self.d_0)
-            cross_track_err = cross_track_err + avoidance_change
-
-            rospy.loginfo("Found obstacle, changing d from %f to %f for %f with %d" \
-                %(cross_track_err - avoidance_change, cross_track_err, avoidance_change, self.avoidance_time))
-
-        rospy.loginfo("Cross track / phi %f %f" %(cross_track_err, heading_err))
-        car_control_msg.omega =  self.k_d * cross_track_err + self.k_theta * heading_err #*self.steer_gain #Right stick H-axis. Right is negative
+        if self.found_obstacle:
+            self.avoidance_maneuver(lane_pose_msg.header)
+        else:    
+            rospy.loginfo("Cross track / phi %f %f, w: %f" %(cross_track_err, heading_err, self.k_d * cross_track_err + self.k_theta * heading_err))
+            car_control_msg.omega =  self.k_d * cross_track_err + self.k_theta * heading_err #*self.steer_gain #Right stick H-axis. Right is negative
         
-        rospy.loginfo("omega: %f" %(car_control_msg.omega))
+        #rospy.loginfo("omega: %f" %(car_control_msg.omega))
         # controller mapping issue
         # car_control_msg.steering = -car_control_msg.steering
         # print "controls: speed %f, steering %f" % (car_control_msg.speed, car_control_msg.steering)
         # self.pub_.publish(car_control_msg)
-        if not self.found_obstacle:
-            self.publishCmd(car_control_msg)
+        self.publishCmd(car_control_msg)
 
         #rospy.loginfo("ar_lane_lane_control pose callback")
         # debuging
@@ -200,7 +210,6 @@ class ar_tag_lane_controller(object):
             z_pos = tag_detection.pose.pose.position.z
             x_pos = tag_detection.pose.pose.position.x 
             y_pos = tag_detection.pose.pose.position.y
-            rospy.loginfo("Avoidance time %d" % self.avoidance_time)
             if z_pos < self.stop_dist:
                 #self.publishCmd(self.stop_msg)
                 self.found_obstacle = True
