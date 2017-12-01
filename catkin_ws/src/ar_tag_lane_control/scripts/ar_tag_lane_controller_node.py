@@ -34,8 +34,14 @@ class ar_tag_lane_controller(object):
         self.stop_dist = 0.5
         self.slow_down_dist = 1
         self.current_v = self.v_bar
-        self.obstacle_x_position = 0
 
+        # for obstacle avoidance
+        self.obstacle_x_position = 0
+        self.obstacle_z_position = 0
+        self.k_o = 1
+        self.d_0 = 0.1
+        self.maneuver_time = 10
+        self.avoidance_time = 2*self.maneuver_time+1
 
     def get_stop_msg(self):
         stop_msg = Twist2DStamped()
@@ -57,6 +63,7 @@ class ar_tag_lane_controller(object):
 
     def setGains(self):
         v_bar = 0.5 # nominal speed, 0.5m/s
+        #v_bar = 0.0 # change for experimentation
         k_theta = -2.0
         k_d = - (k_theta ** 2) / ( 4.0 * v_bar)
         theta_thres = math.pi / 6
@@ -124,6 +131,8 @@ class ar_tag_lane_controller(object):
         #self.pub_wheels_cmd.publish(wheels_cmd_msg)
 
     def cbPose(self,lane_pose_msg):
+
+        self.current_v = self.v_bar
         self.lane_reading = lane_pose_msg 
 
         cross_track_err = lane_pose_msg.d - self.d_offset
@@ -133,22 +142,37 @@ class ar_tag_lane_controller(object):
         car_control_msg.header = lane_pose_msg.header
 
         # reset speed if no obstacle found
-        if not self.found_obstacle:
-        	rospy.loginfo("No obstacles found, resetting speed")
-        	self.current_v = self.v_bar
+        #if not self.found_obstacle:
+        	#rospy.loginfo("No obstacles found, resetting speed")
+        #	self.current_v = self.v_bar
 
         car_control_msg.v = self.current_v  #*self.speed_gain #Left stick V-axis. Up is positive
         
         if math.fabs(cross_track_err) > self.d_thres:
             cross_track_err = cross_track_err / math.fabs(cross_track_err) * self.d_thres
 
-        if self.found_obstacle:
-            cross_track_err = cross_track_err - self.obstacle_x_position
+        self.maneuver_time = 15
+        if self.found_obstacle and self.avoidance_time <= self.maneuver_time:
+            self.avoidance_time += 1
+            #rospy.loginfo("lane reading: %f, ob: %f at %f" % (cross_track_err, self.obstacle_x_position, self.current_v))
+            avoidance_change = 10*self.k_o* (self.obstacle_x_position + np.sign(self.obstacle_x_position)*self.d_0)
+            cross_track_err = cross_track_err - avoidance_change
+            rospy.loginfo("Found obstacle, changing d from %f to %f for %f with %d"\
+             %(cross_track_err + avoidance_change, cross_track_err, avoidance_change, self.avoidance_time))
 
-            rospy.loginfo("Found obstacle, changing d from %f to %f" %(cross_track_err + self.obstacle_x_position, cross_track_err))
+        elif self.found_obstacle and self.avoidance_time > self.maneuver_time and self.avoidance_time <= 2*self.maneuver_time:
+            self.avoidance_time += 1
+            #rospy.loginfo("lane reading: %f, ob: %f at %f" % (cross_track_err, self.obstacle_x_position, self.current_v))
+            avoidance_change = 10*self.k_o* (self.obstacle_x_position + np.sign(self.obstacle_x_position)*self.d_0)
+            cross_track_err = cross_track_err + avoidance_change
 
+            rospy.loginfo("Found obstacle, changing d from %f to %f for %f with %d" \
+                %(cross_track_err - avoidance_change, cross_track_err, avoidance_change, self.avoidance_time))
+
+        rospy.loginfo("Cross track / phi %f %f" %(cross_track_err, heading_err))
         car_control_msg.omega =  self.k_d * cross_track_err + self.k_theta * heading_err #*self.steer_gain #Right stick H-axis. Right is negative
         
+        rospy.loginfo("omega: %f" %(car_control_msg.omega))
         # controller mapping issue
         # car_control_msg.steering = -car_control_msg.steering
         # print "controls: speed %f, steering %f" % (car_control_msg.speed, car_control_msg.steering)
@@ -176,16 +200,19 @@ class ar_tag_lane_controller(object):
             z_pos = tag_detection.pose.pose.position.z
             x_pos = tag_detection.pose.pose.position.x 
             y_pos = tag_detection.pose.pose.position.y
+            rospy.loginfo("Avoidance time %d" % self.avoidance_time)
             if z_pos < self.stop_dist:
                 #self.publishCmd(self.stop_msg)
                 self.found_obstacle = True
                 rospy.loginfo("Found z pos to be (x,y,z) = (%f, %f, %f - swerving" %(x_pos, y_pos, z_pos))
+                self.obstacle_z_position = z_pos
                 self.obstacle_x_position = x_pos
+                self.avoidance_time = 0
             elif z_pos < self.slow_down_dist:
-                self.current_v = self.v_bar / 2
+                #self.current_v = self.v_bar / 2
                 rospy.loginfo("Found z pos to be %f - slowing down" %(z_pos))
             elif z_pos >= self.slow_down_dist:
-                self.current_v = self.v_bar
+                #self.current_v = self.v_bar
                 rospy.loginfo("Found z pos to be %f - speeding up" %(z_pos))
 
 if __name__ == "__main__":
