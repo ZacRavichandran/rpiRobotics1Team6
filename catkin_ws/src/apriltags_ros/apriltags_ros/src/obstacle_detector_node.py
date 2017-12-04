@@ -10,6 +10,7 @@ import numpy as np
 from rospy.numpy_msg import numpy_msg
 from cv_bridge import CvBridge
 import cv2
+import os 
 
 class ObstacleDetectorNode(object):
 	def __init__(self):
@@ -18,6 +19,17 @@ class ObstacleDetectorNode(object):
 		self.bridge = CvBridge()
 		self.pub_visualize = rospy.Publisher("~tag_detections", AprilTagDetectionArray, queue_size=1)
 		self.stop_sign_id = 10
+
+	def write_results(self, file, shape, size, ar, stop_sign = True):
+		msg = "%d, %f, %f, %f\n" % (stop_sign, shape, size, ar)
+		self.write_to_file(file, msg)
+
+	def write_to_file(self, file, msg):
+		dir_path = os.path.dirname(os.path.realpath(__file__))
+		file_loc = dir_path + "/" + file
+		rospy.loginfo("writing to %s" % file_loc)
+		with open(file_loc, 'a') as f:
+			f.write(msg)		
 
 	def find_signs(self, img):
 		shapes = find_stop_signs(img)
@@ -28,6 +40,7 @@ class ObstacleDetectorNode(object):
 			ar = w / float(h)
 			if shape.size > 200 and ar >= 0.3: # shape.shape >= 3 and shape.size > 1000 and ar <= 1.05 and ar >= 0.7:
 				rospy.loginfo("Found shape: %d at (%dx%d) of size %d with %0.3f" % (shape.shape, shape.cx, shape.cy, shape.size, ar))
+				self.write_results("stop_sign_data.txt", shape.shape, shape.size, ar)
 				self.make_and_publish_position_message(0, 10)
 				published = True
 
