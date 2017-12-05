@@ -11,10 +11,19 @@ class FoundShape():
 		self.cy = cy
 		self.ratio = ratio
 		self.size = self.get_size()
+		self.r = 0
+		self.g = 0
+		self.b = 0
 
 	def get_size(self):
 		minx, maxx, miny, maxy = get_bounds(self.contour, self.ratio)
 		return abs(minx - maxx) * abs(miny - maxy)
+
+	def set_rgb(self, r, g, b):
+		self.r = r 
+		self.g = g 
+		self.b = b
+
 
 def detect(c):
 	"""
@@ -38,7 +47,7 @@ def detect(c):
 		shape = "circle";
 	return len(approx), approx
 
-def find_all_shapes(c_in, image, ratio):
+def find_all_shapes(c_in, image, ratio, resized_img):
 	found_shapes = []
 	for c in c_in:
 		M = cv2.moments(c)
@@ -47,6 +56,9 @@ def find_all_shapes(c_in, image, ratio):
 		shape, approx = detect(c)
 		found_shapes.append(FoundShape(shape, c, approx, cX, cY, ratio))
 
+		# try getting color
+		r, g ,b = get_rbg_values(resized_img, c)
+		found_shapes[-1].set_rgb(np.mean(r), np.mean(g), np.mean(b))
 	# show the output image
 	return image, found_shapes
 
@@ -99,12 +111,20 @@ def find_color(img, lower_color, upper_color, size):
 	hsv_img = cv2.cvtColor(resized, cv2.COLOR_BGR2HSV)
 
 	mask = cv2.inRange(hsv_img, lower_color, upper_color)
-	return mask, ratio, size
+	return mask, ratio, size, resized
+
+def get_rbg_values(img, contour):
+	mask = img.copy()
+	cv2.drawContours(mask, [contour], -1, (255,255,255), -1)
+	#out = np.zeros_like(mask)
+	b,g,r = cv2.split(img)
+	bm, gm, rm = cv2.split(mask)
+	return b[bm==255], g[gm==255], r[rm==255]
 
 def find_stop_signs(img):
-	preprocessd_img, ratio, size = find_red(img)
+	preprocessd_img, ratio, size, resized_img = find_red(img)
 	contours, hierarchy = cv2.findContours(preprocessd_img.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-	img, found_shapes = find_all_shapes(contours, img, ratio)
+	img, found_shapes = find_all_shapes(contours, img, ratio, resized_img)
 
 	return found_shapes
 
