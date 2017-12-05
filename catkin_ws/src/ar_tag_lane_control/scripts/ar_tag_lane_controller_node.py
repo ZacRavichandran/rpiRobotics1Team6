@@ -169,10 +169,10 @@ class ar_tag_lane_controller(object):
                 #rospy.loginfo("Found z pos to be %f - stopping" %(z_pos))
             elif z_pos < self.slow_down_dist:
                 self.current_v = self.v_bar / 2
-                rospy.loginfo("Found z pos to be %f - slowing down" %(z_pos))
+                #rospy.loginfo("Found z pos to be %f - slowing down" %(z_pos))
             elif z_pos >= self.slow_down_dist:
                 self.current_v = self.v_bar
-                rospy.loginfo("Found z pos to be %f - speeding up" %(z_pos))
+                #rospy.loginfo("Found z pos to be %f - speeding up" %(z_pos))
 
 if __name__ == "__main__":
     rospy.init_node("ar_tag_lane_controller",anonymous=False)
