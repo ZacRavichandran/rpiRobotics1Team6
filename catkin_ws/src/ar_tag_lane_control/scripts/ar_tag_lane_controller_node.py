@@ -3,6 +3,7 @@ import rospy
 import numpy as np
 import math
 from duckietown_msgs.msg import  Twist2DStamped, LanePose, AprilTagDetectionArray, AprilTagDetection
+import inverse_kin
 
 class ar_tag_lane_controller(object):
     def __init__(self):
@@ -44,6 +45,7 @@ class ar_tag_lane_controller(object):
         self.avoidance_time = 2*self.maneuver_time+1
 
         self.last_header = None
+        self.last_phi = 0
 
     def get_stop_msg(self):
         stop_msg = Twist2DStamped()
@@ -151,9 +153,17 @@ class ar_tag_lane_controller(object):
             rospy.sleep(maneuver_time)
         self.found_obstacle = False
 
-    def avoidance_maneuver_v2(self, header, z, x):
+    def avoidance_maneuver_inverse_kin(self, header, x, y, phi):
         """
         Maneuver around an obstacle
+        """
+        # Don't need phi for estimate
+        w,t = inverse_kin.get_wt_from_gradient_descent(x, y, self.v_bar, 0)
+        print("xd, yd, phi: (%f, %f, %f), w: %f, t %f" % (x, y, phi, w, t))
+
+
+        self.make_and_send_control_msg(header, self.v_bar, w)
+        self.make_and_send_control_msg(header, self.v_bar, -w)
         """
         maneuver_time = 0.15
 
@@ -168,6 +178,7 @@ class ar_tag_lane_controller(object):
             rospy.loginfo("chaining omega to %f" % (-omega))
             self.make_and_send_control_msg(header, self.v_bar, -omega)
             rospy.sleep(maneuver_time)
+        """
         self.found_obstacle = False
 
     def make_and_send_control_msg(self, header, v, omega):
@@ -183,6 +194,7 @@ class ar_tag_lane_controller(object):
 
         cross_track_err = lane_pose_msg.d - self.d_offset
         heading_err = lane_pose_msg.phi
+        self.last_phi = heading_err
 
         car_control_msg = Twist2DStamped()
         car_control_msg.header = lane_pose_msg.header
@@ -199,7 +211,7 @@ class ar_tag_lane_controller(object):
             cross_track_err = cross_track_err / math.fabs(cross_track_err) * self.d_thres
     
         if not self.found_obstacle:
-            rospy.loginfo("Cross track / phi %f %f, w: %f" %(cross_track_err, heading_err, self.k_d * cross_track_err + self.k_theta * heading_err))
+            #rospy.loginfo("Cross track / phi %f %f, w: %f" %(cross_track_err, heading_err, self.k_d * cross_track_err + self.k_theta * heading_err))
             car_control_msg.omega =  self.k_d * cross_track_err + self.k_theta * heading_err #*self.steer_gain #Right stick H-axis. Right is negative
             self.publishCmd(car_control_msg)
         #rospy.loginfo("omega: %f" %(car_control_msg.omega))
@@ -231,11 +243,11 @@ class ar_tag_lane_controller(object):
             if z_pos < self.stop_dist:
                 #self.publishCmd(self.stop_msg)
                 self.found_obstacle = True
-                rospy.loginfo("Found z pos to be (x,y,z) = (%f, %f, %f - swerving" %(x_pos, y_pos, z_pos))
+                #rospy.loginfo("Found z pos to be (x,y,z) = (%f, %f, %f - swerving" %(x_pos, y_pos, z_pos))
                 self.obstacle_z_position = z_pos
                 self.obstacle_x_position = x_pos
                 self.avoidance_time = 0
-                self.avoidance_maneuver(self.last_header)
+                self.avoidance_maneuver_inverse_kin(self.last_header, x_pos, z_pos, self.last_phi)
             elif z_pos < self.slow_down_dist:
                 #self.current_v = self.v_bar / 2
                 rospy.loginfo("Found z pos to be %f - slowing down" %(z_pos))
