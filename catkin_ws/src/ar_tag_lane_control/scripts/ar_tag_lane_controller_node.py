@@ -3,6 +3,7 @@ import rospy
 import numpy as np
 import math
 from duckietown_msgs.msg import  Twist2DStamped, LanePose, AprilTagDetectionArray, AprilTagDetection
+from inverse_kin import *
 
 class ar_tag_lane_controller(object):
     def __init__(self):
