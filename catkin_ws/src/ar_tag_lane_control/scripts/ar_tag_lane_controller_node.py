@@ -53,6 +53,13 @@ class ar_tag_lane_controller(object):
 
         self.at_stop_line = False
 
+        # 0: left
+        # 1: right
+        # 2: straight
+        self.turn_instructions = []# [2, 0, 1]
+        self.last_stop_line = 0
+        self.current_instruction = 0
+
     def get_stop_msg(self):
         stop_msg = Twist2DStamped()
         stop_msg.v = 0.0
@@ -281,17 +288,48 @@ class ar_tag_lane_controller(object):
         self.publishCmd(car_control_msg)
 
     def turn_left(self):
-        left_omega = 1.3
+        left_omega = 1.4
         cmd = self.make_and_send_control_msg(self.last_header, self.v_bar, left_omega)
-        rospy.sleep(2)
+        rospy.sleep(1.75)
+
+    def turn_right(self):
+        right_omega = -2.2
+        cmd = self.make_and_send_control_msg(self.last_header, self.v_bar, right_omega)
+        rospy.sleep(1)
+
+    def go_straight(self, time):
+        straight_omega = 0
+        cmd = self.make_and_send_control_msg(self.last_header, self.v_bar, straight_omega)
+        rospy.sleep(time)    
+
+    def straight_at_instersection(self):
+        t = 2.1
+        self.go_straight(t)
 
     def cb_stop_line(self, msg):
-        self.at_stop_line = True
-        self.publishCmd(self.get_stop_msg())
-        rospy.sleep(1)
-        self.turn_left()
-        rospy.sleep(1)
-        self.at_stop_line = False
+        stop_time_filter = 1.25
+        if time.time() - self.last_stop_line > stop_time_filter:
+            rospy.loginfo(msg.header.stamp)
+            self.at_stop_line = True
+            self.publishCmd(self.get_stop_msg())
+            rospy.sleep(1)
+            if self.current_instruction < len(self.turn_instructions):
+                if self.turn_instructions[self.current_instruction] == 0:
+                    self.turn_left()
+                elif self.turn_instructions[self.current_instruction] == 1:
+                    self.turn_right()
+                elif self.turn_instructions[self.current_instruction] == 2:
+                    self.straight_at_instersection()
+                self.current_instruction += 1
+            else:
+                self.turn_left()
+            rospy.sleep(1)
+            self.at_stop_line = False
+            self.last_stop_line = time.time()
+        else:
+            rospy.loginfo("Skipping line at time %f" %(time.time() - self.last_stop_line))
+            self.last_stop_line = 0
+
 
     def cbPose(self,lane_pose_msg):
         self.current_v = self.v_bar
