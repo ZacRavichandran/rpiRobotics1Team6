@@ -55,7 +55,7 @@ class ar_tag_lane_controller(object):
         return value
 
     def setGains(self):
-        v_bar = 0.3 # nominal speed, 0.5m/s
+        v_bar = 0.5 # nominal speed, 0.5m/s
         k_theta = -2.0
         k_d = - (k_theta ** 2) / ( 4.0 * v_bar)
         theta_thres = math.pi / 6
@@ -129,30 +129,33 @@ class ar_tag_lane_controller(object):
 
         #cross_track_err = lane_pose_msg.d - self.d_offset
         #heading_err = lane_pose_msg.phi
-
+	j = 1
 	if self.found_obstacle:
-		cross_track_err = lane_pose_msg.d - self.d_offset
-		heading_err = lane_pose_msg.phi
+		while j < 1000:
+			cross_track_err = lane_pose_msg.d - self.d_offset
+			heading_err = lane_pose_msg.phi
 	
 
-        	car_control_msg = Twist2DStamped()
-        	car_control_msg.header = lane_pose_msg.header
+        		car_control_msg = Twist2DStamped()
+        		car_control_msg.header = lane_pose_msg.header
 	
 	   # added stop flag
-        	car_control_msg.v = self.current_v  #*self.speed_gain #Left stick V-axis. Up is positive
+        		car_control_msg.v = self.current_v  #*self.speed_gain #Left stick V-axis. Up is positive
+			print("V command %f" % car_control_msg.v)
         
-        	if math.fabs(cross_track_err) > self.d_thres:
-           		cross_track_err = cross_track_err / math.fabs(cross_track_err) * self.d_thres
-        	car_control_msg.omega =  self.k_d * cross_track_err + self.k_theta * heading_err #*self.steer_gain #Right stick H-axis. Right is negative
+        		if math.fabs(cross_track_err) > self.d_thres:
+           			cross_track_err = cross_track_err / math.fabs(cross_track_err) * self.d_thres
+        		car_control_msg.omega =  self.k_d * cross_track_err + self.k_theta * heading_err #*self.steer_gain #Right stick H-axis. Right is negative
        # if not self.found_obstacle
-		self.publishCmd(car_control_msg)  
+			self.publishCmd(car_control_msg)
+			j = j + 1  
  
         # controller mapping issueheading_err = lane_pose_msg.phiheading_err = lane_pose_msg.phi
         # car_control_msg.steering = -car_control_msg.steering
         # print "controls: speed %f, steering %f" % (car_control_msg.speed, car_control_msg.steering)
         # self.pub_.publish(car_control_msg)
         elif not self.found_obstacle:
-        	cross_track_err = lane_pose_msg.d - 1.0
+        	cross_track_err = lane_pose_msg.d + 0.0
         	heading_err = lane_pose_msg.phi
 
 
@@ -161,11 +164,11 @@ class ar_tag_lane_controller(object):
 
            # added stop flag
      		car_control_msg.v = self.current_v/2  #*self.speed_gain #Left stick V-axi$
-
+		
       		if math.fabs(cross_track_err) > self.d_thres:
             		cross_track_err = cross_track_err / math.fabs(cross_track_err) #* se$
-        	car_control_msg.omega =  self.k_d * cross_track_err + self.k_theta #* he$
-
+        	car_control_msg.omega =  self.k_d * cross_track_err + self.k_theta * heading_err #* he$
+		print("V and omega (%f, %f)" %(car_control_msg.v, car_control_msg.omega))
        		self.publishCmd(car_control_msg)
 
         rospy.loginfo("ar_lane_lane_control pose callback")
@@ -188,9 +191,7 @@ class ar_tag_lane_controller(object):
             z_pos = tag_detection.pose.pose.position.z
             if z_pos < self.stop_dist:
 		#self.publishCmd(self.stop_msg)
-                #self.current_v = self.v_bar / 2
-		cross_track_err = lane_pose_msg.d - self.d_offset
-                heading_err = lane_pose_msg.phi
+                #self.current_v = self.v_bar
 		self.found_obstacle = True
                 rospy.loginfo("Found z pos to be %f - stopping" %(z_pos))
            # elif z_pos < self.slow_down_dist:
