@@ -2,7 +2,7 @@
 import rospy
 import numpy as np
 import math
-from duckietown_msgs.msg import  Twist2DStamped, LanePose, AprilTagDetectionArray, AprilTagDetection
+from duckietown_msgs.msg import  Twist2DStamped, LanePose, AprilTagDetectionArray, AprilTagDetection, BoolStamped
 import inverse_kin
 import time
 
@@ -22,6 +22,7 @@ class ar_tag_lane_controller(object):
         # Subscriptions
         self.sub_lane_reading = rospy.Subscriber("~lane_pose", LanePose, self.cbPose, queue_size=1)
         self.sub_ar_tag_detections = rospy.Subscriber("~tag_detections", AprilTagDetectionArray, self.cbTags, queue_size=1)
+        self.sub_at_stop_line = rospy.Subscriber("~at_stop_line", BoolStamped, self.cb_stop_line, queue_size=1)
 
         # safe shutdown
         rospy.on_shutdown(self.custom_shutdown)
@@ -49,6 +50,8 @@ class ar_tag_lane_controller(object):
         self.last_phi = 0
         self.last_time = 0
         self.last_id = 0
+
+        self.at_stop_line = False
 
     def get_stop_msg(self):
         stop_msg = Twist2DStamped()
@@ -277,6 +280,19 @@ class ar_tag_lane_controller(object):
         car_control_msg.omega = omega  
         self.publishCmd(car_control_msg)
 
+    def turn_left(self):
+        left_omega = 1.3
+        cmd = self.make_and_send_control_msg(self.last_header, self.v_bar, left_omega)
+        rospy.sleep(2)
+
+    def cb_stop_line(self, msg):
+        self.at_stop_line = True
+        self.publishCmd(self.get_stop_msg())
+        rospy.sleep(1)
+        self.turn_left()
+        rospy.sleep(1)
+        self.at_stop_line = False
+
     def cbPose(self,lane_pose_msg):
         self.current_v = self.v_bar
         self.lane_reading = lane_pose_msg 
@@ -294,9 +310,9 @@ class ar_tag_lane_controller(object):
         if math.fabs(cross_track_err) > self.d_thres:
             cross_track_err = cross_track_err / math.fabs(cross_track_err) * self.d_thres
 
-        self.found_obstacle = True
+        #self.found_obstacle = True
     
-        if not self.found_obstacle:
+        if not self.found_obstacle and not self.at_stop_line:
             #rospy.loginfo("Cross track / phi %f %f, w: %f" %(cross_track_err, heading_err, self.k_d * cross_track_err + self.k_theta * heading_err))
             car_control_msg.omega =  self.k_d * cross_track_err + self.k_theta * heading_err #*self.steer_gain #Right stick H-axis. Right is negative
             self.publishCmd(car_control_msg)
@@ -323,8 +339,6 @@ class ar_tag_lane_controller(object):
                     self.avoidance_time = 0
                     # assume a lag
                     yd = z_pos
-                    #self.avoidance_maneuver_inverse_kin(self.last_header, x_pos, yd, self.last_phi)
-                    #self.avoidance_maneuver_inverse_kin(self.last_header, 0, 0.5, self.last_phi)
 
                     # left is positive x!
                     xd = -0.2

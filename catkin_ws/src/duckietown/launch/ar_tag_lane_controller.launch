@@ -35,6 +35,7 @@
     <!-- Lane controller -->
     <remap from="ar_tag_lane_controller_node/lane_pose" to="lane_filter_node/lane_pose"/>
     <remap from="ar_tag_lane_controller_node/tag_detections" to="tag_detections"/>
+    <remap from="ar_tag_lane_controller_node/at_stop_line" to="stop_line_filter_node/at_stop_line"/>
     <include file="$(find ar_tag_lane_control)/launch/ar_tag_lane_controller_node.launch">
         <arg name="veh" value="$(arg veh)"/>
         <arg name="local" value="$(arg lane_control_local)"/>
