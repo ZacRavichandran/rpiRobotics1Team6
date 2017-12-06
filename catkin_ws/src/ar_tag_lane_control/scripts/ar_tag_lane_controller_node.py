@@ -208,7 +208,6 @@ class ar_tag_lane_controller(object):
         rospy.sleep(t)
         self.publishCmd(self.get_stop_msg())
 
-
     def make_and_send_control_msg(self, header, v, omega):
         car_control_msg = Twist2DStamped()
         car_control_msg.header = header 
@@ -228,35 +227,15 @@ class ar_tag_lane_controller(object):
         car_control_msg.header = lane_pose_msg.header
         self.last_header = lane_pose_msg.header
 
-        # reset speed if no obstacle found
-        #if not self.found_obstacle:
-        	#rospy.loginfo("No obstacles found, resetting speed")
-        #	self.current_v = self.v_bar
-
         car_control_msg.v = self.current_v  #*self.speed_gain #Left stick V-axis. Up is positive
         
         if math.fabs(cross_track_err) > self.d_thres:
             cross_track_err = cross_track_err / math.fabs(cross_track_err) * self.d_thres
     
-        self.found_obstacle = True
-
         if not self.found_obstacle:
             #rospy.loginfo("Cross track / phi %f %f, w: %f" %(cross_track_err, heading_err, self.k_d * cross_track_err + self.k_theta * heading_err))
             car_control_msg.omega =  self.k_d * cross_track_err + self.k_theta * heading_err #*self.steer_gain #Right stick H-axis. Right is negative
             self.publishCmd(car_control_msg)
-        #rospy.loginfo("omega: %f" %(car_control_msg.omega))
-        # controller mapping issue
-        # car_control_msg.steering = -car_control_msg.steering
-        # print "controls: speed %f, steering %f" % (car_control_msg.speed, car_control_msg.steering)
-        # self.pub_.publish(car_control_msg)
-
-        #rospy.loginfo("ar_lane_lane_control pose callback")
-        # debuging
-        #self.pub_counter += 1
-        #if self.pub_counter % 50 == 0:
-        #    self.pub_counter = 1
-        #    print "lane_controller publish"
-        #    print car_control_msg
 
     def cbTags(self, tag_msg):
         rospy.loginfo("ar_tag_lane_control ar tag callback with %d tags" %(len(tag_msg.detections)))
