@@ -4,6 +4,7 @@ import numpy as np
 import math
 from duckietown_msgs.msg import  Twist2DStamped, LanePose, AprilTagDetectionArray, AprilTagDetection
 import inverse_kin
+import time
 
 class ar_tag_lane_controller(object):
     def __init__(self):
@@ -46,6 +47,8 @@ class ar_tag_lane_controller(object):
 
         self.last_header = None
         self.last_phi = 0
+        self.last_time = 0
+        self.last_id = 0
 
     def get_stop_msg(self):
         stop_msg = Twist2DStamped()
@@ -158,28 +161,53 @@ class ar_tag_lane_controller(object):
         Maneuver around an obstacle
         """
         # Don't need phi for estimate
-        w,t = inverse_kin.get_wt_from_gradient_descent(x, y, self.v_bar, 0)
-        print("xd, yd, phi: (%f, %f, %f), w: %f, t %f" % (x, y, phi, w, t))
+        # Moving Right is Negative x
+        offset = 0.3
+        xd = x - offset
+        yd = y
+        xd = + offset
+        yd = y
+        xd = 0.4
+        yd = 0.5
+        w,t = inverse_kin.get_wt_from_gradient_descent(xd, yd, 0.5, 0)
+        print("xd, yd, phi: (%f, %f, %f), w: %f, t %f" % (xd, yd, phi, w, t))
+        if True:
+            print("Error: (x_d, y_d) = (%f, %f), (x,y)=(%f,%f)" \
+                %(xd, yd, inverse_kin.x_t(w,t, 0.5, 0), inverse_kin.y_t(w,t,0.5,0)))
 
+        # Note - coordinates for solution are flipped for x axis
+        t1 = time.time()
+        #while time.time() - t1 <= t:
+        self.make_and_send_control_msg(header, 0.5, w)
+        rospy.sleep(t)
 
-        self.make_and_send_control_msg(header, self.v_bar, w)
-        self.make_and_send_control_msg(header, self.v_bar, -w)
-        """
-        maneuver_time = 0.15
+        rospy.loginfo("Reversing direction after %f" % (time.time() - t1))
+        self.publishCmd(self.get_stop_msg())
+        rospy.sleep(0.01)
 
-        omega = 1.7*np.abs((1 + x))
-        for i in range(10):
-            rospy.loginfo("chaining omega to %f" %(omega))
-            self.make_and_send_control_msg(header, self.v_bar, omega)
-            rospy.sleep(maneuver_time)
-            #cross_track_err = cross_track_err + 0.25
-        for j in range(10):
-            #cross_track_err = cross_track_err - 0.25   
-            rospy.loginfo("chaining omega to %f" % (-omega))
-            self.make_and_send_control_msg(header, self.v_bar, -omega)
-            rospy.sleep(maneuver_time)
-        """
+        t2 = time.time()
+        #while time.time() - t2 <= t:
+        self.make_and_send_control_msg(header, 0.5, -w)
+        rospy.sleep(t)
+
+        self.publishCmd(self.get_stop_msg())
+        rospy.loginfo("stopping after %f " % (time.time() - t2))
         self.found_obstacle = False
+
+    def go_to_position_with_inverse_kin(self, header, xd, yd, phi):
+        w,t = inverse_kin.get_wt_from_gradient_descent(xd, yd, 0.5, 0)
+        print("xd, yd, phi: (%f, %f, %f), w: %f, t %f" % (xd, yd, phi, w, t))
+        if True:
+            print("Error: (x_d, y_d) = (%f, %f), (x,y)=(%f,%f)" \
+                %(xd, yd, inverse_kin.x_t(w,t, 0.5, 0), inverse_kin.y_t(w,t,0.5,0)))
+
+        # Note - coordinates for solution are flipped for x axis
+        t1 = time.time()
+        #while time.time() - t1 <= t:
+        self.make_and_send_control_msg(header, 0.5, w)
+        rospy.sleep(t)
+        self.publishCmd(self.get_stop_msg())
+
 
     def make_and_send_control_msg(self, header, v, omega):
         car_control_msg = Twist2DStamped()
@@ -210,6 +238,8 @@ class ar_tag_lane_controller(object):
         if math.fabs(cross_track_err) > self.d_thres:
             cross_track_err = cross_track_err / math.fabs(cross_track_err) * self.d_thres
     
+        self.found_obstacle = True
+
         if not self.found_obstacle:
             #rospy.loginfo("Cross track / phi %f %f, w: %f" %(cross_track_err, heading_err, self.k_d * cross_track_err + self.k_theta * heading_err))
             car_control_msg.omega =  self.k_d * cross_track_err + self.k_theta * heading_err #*self.steer_gain #Right stick H-axis. Right is negative
@@ -244,10 +274,27 @@ class ar_tag_lane_controller(object):
                 #self.publishCmd(self.stop_msg)
                 self.found_obstacle = True
                 #rospy.loginfo("Found z pos to be (x,y,z) = (%f, %f, %f - swerving" %(x_pos, y_pos, z_pos))
-                self.obstacle_z_position = z_pos
-                self.obstacle_x_position = x_pos
-                self.avoidance_time = 0
-                self.avoidance_maneuver_inverse_kin(self.last_header, x_pos, z_pos, self.last_phi)
+                if self.obstacle_z_position  == 0:
+                    self.obstacle_z_position = z_pos
+                    self.obstacle_x_position = x_pos
+                    self.avoidance_time = 0
+                    # assume a lag
+                    yd = z_pos
+                    #self.avoidance_maneuver_inverse_kin(self.last_header, x_pos, yd, self.last_phi)
+                    #self.avoidance_maneuver_inverse_kin(self.last_header, 0, 0.5, self.last_phi)
+                    self.go_to_position_with_inverse_kin(self.last_header, x_pos + 0.4, yd, 0)
+                    rospy.sleep(1)
+                    self.go_to_position_with_inverse_kin(self.last_header, 0, 0.3, 0)
+                    rospy.sleep(1)
+                    self.go_to_position_with_inverse_kin(self.last_header, -(x_pos + 0.4), yd, 0)
+
+                    self.last_id = tag_id
+
+                else:
+                    rospy.loginfo("Skipping repeat")
+                    self.obstacle_x_position = 0
+                    self.obstacle_z_position = 0
+                    self.tag_id = -1
             elif z_pos < self.slow_down_dist:
                 #self.current_v = self.v_bar / 2
                 rospy.loginfo("Found z pos to be %f - slowing down" %(z_pos))

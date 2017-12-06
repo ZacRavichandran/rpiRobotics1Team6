@@ -57,7 +57,7 @@ def get_wt_from_gradient_descent(xd, yd, v, phi, steps = 100, w0=0.1, t0 = 0.1, 
 
 	return wt[0], wt[1]
 
-def get_wt_from_newtonian_descent(xd, yd, v, phi, steps = 100, w0=0.1, t0 = 0.1, k=1):
+def get_wt_from_newtonian_descent(xd, yd, v, phi, steps = 100, w0=0.1, t0 = 0.1, k=0.3):
 	"""
 	Uses newtonian descent to find a w and t that will drive the car to the desired
 	x and y location
@@ -79,7 +79,7 @@ def get_final_x_y(w,t,v,phi):
 	return x_t(w,t,v,phi), y_t(w,t,v,phi)
 
 if __name__ == "__main__":
-	w, t = get_wt_from_newtonian_descent(-0.2, 0.5, 0.5, 0, steps=100, k=0.2)
+	w, t = get_wt_from_newtonian_descent(-0.186944, 0.773018, 0.5, 0, steps=100, k=0.2)
 	print(get_final_x_y(w,t,0.5,0))
 	print(w)
 	print(t)
