@@ -40,6 +40,12 @@ def dy_t(w, t, v, phi):
 	"""
 	return v * np.cos(w*t + phi)
 
+def dx_v(w, t, v, phi):
+	return -1/w * np.cos(w *t + phi) + 1/w * np.cos(phi)
+
+def dy_v(w, t, v, phi):
+	return 1/w * np.sin(w*t + phi) - 1/w * np.sin(phi)
+
 
 def get_wt_from_gradient_descent(xd, yd, v, phi, steps = 100, w0=0.1, t0 = 0.1, k=1):
 	"""
@@ -74,6 +80,42 @@ def get_wt_from_newtonian_descent(xd, yd, v, phi, steps = 100, w0=0.1, t0 = 0.1,
 
 
 	return wt[0], wt[1]
+
+def get_wv_from_gradient_descent(xd, yd, t, phi, steps=100, w0=0.1, v0=0.1, k=0.1):
+	"""
+	Uses gradient descent to find a w and v that will drive the car to the desired
+	x and y location
+	"""
+	wv = np.reshape(np.array([w0, v0]), (2,1))
+	pd = np.reshape(np.array([yd, xd]), (2,1))
+
+	for i in range(steps):
+		e = np.reshape(np.array([y_t(wv[0], t, wv[1], phi), x_t(wv[0], t, wv[1], phi)]), (2,1)) - pd 
+		grad_e_wv = np.squeeze(np.array([[dy_w(wv[0], t, wv[1], phi), dy_v(wv[0], t, wv[1], phi)],\
+								[dx_w(wv[0], t, wv[1], phi), dx_v(wv[0], t, wv[1], phi)]]), axis=2)
+		wv = wv - k*np.matmul(np.transpose(grad_e_wv), e)
+
+	return wv[0], wv[1]
+
+def get_wv_from_newtonian_descent(xd, yd, t, phi, steps = 100, w0=0.1, v0 = 0.1, k=1):
+	"""
+	Uses newtonian descent to find a w and v that will drive the car to the desired
+	x and y location
+	"""
+	wv = np.reshape(np.array([0.1, 0.1]), (2,1))
+	pd = np.reshape(np.array([yd, xd]), (2,1))
+
+	for i in range(steps):
+		e = np.reshape(np.array([y_t(wv[0], t, wv[1], phi), x_t(wv[0], t, wv[1], phi)]), (2,1)) - pd 
+
+		grad_e_wv = np.squeeze(np.array([[dy_w(wv[0], t, wv[1], phi), dy_t(wv[0], t, wv[1], phi)],\
+								[dx_w(wv[0], t, wv[1], phi), dx_t(wv[0], t, wv[1], phi)]]), axis=2)
+
+		wv = wv - k*np.reshape(np.array([np.matmul(np.linalg.pinv(np.reshape(grad_e_wv[:,0], (2,1))), e),\
+							 np.matmul(np.linalg.pinv(np.reshape(grad_e_wv[:,1], (2,1))), e)]), (2,1))
+
+
+	return wv[0], wv[1]
 
 def get_final_x_y(w,t,v,phi):
 	return x_t(w,t,v,phi), y_t(w,t,v,phi)

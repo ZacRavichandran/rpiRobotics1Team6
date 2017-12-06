@@ -194,19 +194,81 @@ class ar_tag_lane_controller(object):
         rospy.loginfo("stopping after %f " % (time.time() - t2))
         self.found_obstacle = False
 
-    def go_to_position_with_inverse_kin(self, header, xd, yd, phi):
-        w,t = inverse_kin.get_wt_from_gradient_descent(xd, yd, 0.5, 0)
-        print("xd, yd, phi: (%f, %f, %f), w: %f, t %f" % (xd, yd, phi, w, t))
+    def get_error(self, xd, yd, w,t,v,phi):
+        return np.linalg.norm(np.power(xd-inverse_kin.x_t(w,t,v,phi), 2) + \
+                np.power(yd - inverse_kin.y_t(w,t,v,phi), 2))  
+
+    def go_to_position_with_inverse_kin_wt(self, header, xd, yd, phi, time_adjust=1):
+        v = 0.5
+        wg,tg = inverse_kin.get_wt_from_gradient_descent(xd, yd, 0.5, phi, k=0.1, steps=200)
+        wn, tn = inverse_kin.get_wt_from_newtonian_descent(xd, yd, 0.5, phi, k=0.1, steps=200)
+        errorg = self.get_error(xd, yd, wg, tg, v, phi)
+        errorn = self.get_error(xd, yd, wn, tn, v, phi)
+
+        if errorg < errorn:
+            w = wg
+            t = tg 
+            rospy.loginfo("Using Gradient Solution")
+        else:
+            w = wn 
+            t = tn
+            rospy.loginfo("Using Newton Solution")
+
+        print("xd, yd, phi: (%f, %f, %f), w: %f, t %f, t_adj %f" % (xd, yd, phi, w, t, t*time_adjust))
+        t_adj = t * time_adjust
+
         if True:
             print("Error: (x_d, y_d) = (%f, %f), (x,y)=(%f,%f)" \
-                %(xd, yd, inverse_kin.x_t(w,t, 0.5, 0), inverse_kin.y_t(w,t,0.5,0)))
+                %(xd, yd, inverse_kin.x_t(w,t_adj, 0.5, phi), inverse_kin.y_t(w,t_adj,0.5,phi)))
 
         # Note - coordinates for solution are flipped for x axis
         t1 = time.time()
         #while time.time() - t1 <= t:
         self.make_and_send_control_msg(header, 0.5, w)
-        rospy.sleep(t)
+        rospy.sleep(np.abs(t_adj))
         self.publishCmd(self.get_stop_msg())
+
+        return w, t_adj
+
+    def correct_wv(self, w, v):
+        if v < 0:
+            rospy.loginfo("Corrected (w,v): (%f, %f)" %(w, v))
+            return -1*w, -1*v 
+        else:
+            return w, v
+
+    def go_to_position_with_inverse_kin_wv(self, header, xd, yd, t, phi, time_adjust=1):
+        wg,vg = inverse_kin.get_wv_from_gradient_descent(xd, yd, t, phi, k=0.1, steps=500)
+        wg, vg = self.correct_wv(wg, vg)
+        wn, vn = inverse_kin.get_wv_from_newtonian_descent(xd, yd, t, phi, k=0.1, steps=500)
+        wn, vn = self.correct_wv(wn, vn)
+        errorg = self.get_error(xd, yd, wg, t, vg, phi)
+        errorn = self.get_error(xd, yd, wn, t, vn, phi)
+
+        if errorg < errorn:
+            w = wg
+            v = vg 
+            rospy.loginfo("Using Gradient Solution")
+        else:
+            w = wn 
+            v = vn
+            rospy.loginfo("Using Newton Solution")
+
+        print("xd, yd, phi: (%f, %f, %f), w: %f, v %f, t_adj %f" % (xd, yd, phi, w, v, t*time_adjust))
+        t_adj = t * time_adjust
+
+        if True:
+            print("Error: (x_d, y_d) = (%f, %f), (x,y)=(%f,%f)" \
+                %(xd, yd, inverse_kin.x_t(w, t, v, phi), inverse_kin.y_t(w,t, v, phi)))
+
+        # Note - coordinates for solution are flipped for x axis
+        t1 = time.time()
+        #while time.time() - t1 <= t:
+        self.make_and_send_control_msg(header, v, w)
+        rospy.sleep(t_adj)
+        self.publishCmd(self.get_stop_msg())
+
+        return w, v
 
     def make_and_send_control_msg(self, header, v, omega):
         car_control_msg = Twist2DStamped()
@@ -231,6 +293,8 @@ class ar_tag_lane_controller(object):
         
         if math.fabs(cross_track_err) > self.d_thres:
             cross_track_err = cross_track_err / math.fabs(cross_track_err) * self.d_thres
+
+        self.found_obstacle = True
     
         if not self.found_obstacle:
             #rospy.loginfo("Cross track / phi %f %f, w: %f" %(cross_track_err, heading_err, self.k_d * cross_track_err + self.k_theta * heading_err))
@@ -238,7 +302,7 @@ class ar_tag_lane_controller(object):
             self.publishCmd(car_control_msg)
 
     def cbTags(self, tag_msg):
-        rospy.loginfo("ar_tag_lane_control ar tag callback with %d tags" %(len(tag_msg.detections)))
+        #rospy.loginfo("ar_tag_lane_control ar tag callback with %d tags" %(len(tag_msg.detections)))
         self.found_obstacle = False
         self.process_tags(tag_msg)
 
@@ -261,12 +325,22 @@ class ar_tag_lane_controller(object):
                     yd = z_pos
                     #self.avoidance_maneuver_inverse_kin(self.last_header, x_pos, yd, self.last_phi)
                     #self.avoidance_maneuver_inverse_kin(self.last_header, 0, 0.5, self.last_phi)
-                    self.go_to_position_with_inverse_kin(self.last_header, x_pos + 0.4, yd, 0)
-                    rospy.sleep(1)
-                    self.go_to_position_with_inverse_kin(self.last_header, 0, 0.3, 0)
-                    rospy.sleep(1)
-                    self.go_to_position_with_inverse_kin(self.last_header, -(x_pos + 0.4), yd, 0)
 
+                    # left is positive x!
+                    xd = -0.2
+                    yd = 0.3
+                    t = 1
+                    phi = 0
+                    t_adj = 1.3
+                    w, v = self.go_to_position_with_inverse_kin_wv(self.last_header, xd, yd, t, phi, time_adjust=t_adj)
+                    phi = w * t*t_adj
+                    xd = 0
+                    yd = 0.3
+                    w, v = self.go_to_position_with_inverse_kin_wv(self.last_header, xd, yd, t, phi,time_adjust=t_adj)
+                    phi = phi + w * t*t_adj
+                    xd = -0.2
+                    yd = 0.3
+                    w, v = self.go_to_position_with_inverse_kin_wv(self.last_header, xd, yd, t, phi, time_adjust=t_adj)
                     self.last_id = tag_id
 
                 else:
