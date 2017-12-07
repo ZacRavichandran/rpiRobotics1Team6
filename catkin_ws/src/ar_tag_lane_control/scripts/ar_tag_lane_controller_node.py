@@ -56,7 +56,7 @@ class ar_tag_lane_controller(object):
         # 0: left
         # 1: right
         # 2: straight
-        self.turn_instructions = []# [2, 0, 1]
+        self.turn_instructions = [2, 1, 1, 0]
         self.last_stop_line = 0
         self.current_instruction = 0
 
