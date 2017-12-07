@@ -37,15 +37,15 @@ class DuckietownGraph():
 				itr_vals.remove(edge_key)
 				for comp_edge_key in itr_vals:
 					if node.edges[edge_key].to_node == node.edges[comp_edge_key].to_node:
-						if node.edges[edge_key].cost < node.edges[comp_edge_key]:
+						if node.edges[edge_key].cost < node.edges[comp_edge_key].cost:
 							node.edges[comp_edge_key].to_node = -1
 
 
 	def find_path(self, start_node_id, start_edge, end_node):
 		self.trim_graph()
 		start_node = self.nodes[start_node_id]
-		costs = {0:np.Inf, 1:np.Inf, 2:np.Inf, 3:np.Inf}
-		back_node = {0:None, 1:None, 2:None, 3:None}
+		costs = {0:np.Inf, 1:np.Inf, 2:np.Inf, 3:np.Inf, 4:np.Inf}
+		back_node = {0:None, 1:None, 2:None, 3:None, 4:None}
 		queue = []
 
 		costs[start_node_id] = 0
@@ -70,6 +70,7 @@ class DuckietownGraph():
 				if node.edges[key].to_node is not -1:
 					if cost + node.edges[key].cost < costs[node.edges[key].to_node]:
 						back_node[node.edges[key].to_node] = node.edges[key].from_node
+						costs[node.edges[key].to_node] = cost + node.edges[key].cost
 						heapq.heappush(queue, (cost + node.edges[key].cost, node.edges[key].to_node))
 
 		path = [end_node]
@@ -137,16 +138,33 @@ class DuckietownGraph():
 					last_node = next_node
 		return turns, last_edge
 
-def main():
+def get_duckietown_path(start_node, start_edge, end_node):
 	graph = DuckietownGraph()
-	graph.add_node( DuckietownNode(0, (2,1), (-1,-1), (-1, -1), (1, 1)) )
-	graph.add_node( DuckietownNode(1, (2, 1), (3, 1), (0, 1), (3,1)) )
-	graph.add_node( DuckietownNode(2, (-1,-1), (1, 1), (0, 1), (3, 1)) )
-	graph.add_node( DuckietownNode(3, (2,1), (1,1), (1,1), (-1,-1)) )
+	graph.add_node( DuckietownNode(0, (2,3.5), (4,1), (-1, -1), (1, 1)) )
+	graph.add_node( DuckietownNode(1, (2, 2), (3, 7), (0, 1), (3,1)) )
+	graph.add_node( DuckietownNode(2, (-1,-1), (1, 2), (0, 3.5), (3, 3.5)) )
+	graph.add_node( DuckietownNode(3, (2,3.5), (1,7), (1,1), (-1,-1)) )
 
-	t, e = graph.find_path(3, 's', 0)
-	print(t)
-	print(e)
+	# garage node
+	graph.add_node( DuckietownNode(4, (0,1), (-1,-1), (-1,-1), (-1,-1)) )
+
+	return graph.find_path(start_node, start_edge, end_node)
+	
+def get_duckietown_route(nodes, start_edge, end_command = []):
+	path = []
+	current_edge = start_edge
+	for i in range(1, len(nodes)):
+		path_segment, end_edge = get_duckietown_path(nodes[i-1], current_edge, nodes[i])
+		path.extend(path_segment)
+		current_edge = end_edge
+
+	if len(end_command) > 0:
+		path.extend(end_command)
+
+	return path, current_edge
+
+def main():
+	print(get_duckietown_route([0,1, 2,3, 4], 's'))
 
 
 if __name__ == "__main__":
