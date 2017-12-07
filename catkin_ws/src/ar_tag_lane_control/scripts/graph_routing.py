@@ -54,12 +54,12 @@ class DuckietownGraph():
 		for key in start_node.edges.keys():
 			if key is not start_edge and start_node.edges[key].to_node is not -1:
 				costs[start_node.edges[key].to_node] = start_node.edges[key].cost
-				back_node[start_node.edges[key].to_node] = 0
-				#print("To nodes: %d" % start_node.edges[key].to_node)
+				back_node[start_node.edges[key].to_node] = start_node.node_id
 				heapq.heappush(queue, (start_node.edges[key].cost, start_node.edges[key].to_node))
 
 		
-		for t in queue:
+		while len(queue) > 0:
+			t = heapq.heappop(queue)
 			cost = t[0]
 			node = self.nodes[t[1]]
 		
@@ -72,8 +72,8 @@ class DuckietownGraph():
 						back_node[node.edges[key].to_node] = node.edges[key].from_node
 						heapq.heappush(queue, (cost + node.edges[key].cost, node.edges[key].to_node))
 
-		
 		path = [end_node]
+
 		while True:
 			if back_node[path[-1]] == -1:
 				break
@@ -81,11 +81,48 @@ class DuckietownGraph():
 				path.append(back_node[path[-1]])
 
 		path.reverse()
-		print(self.get_turns(path, start_edge))
+		return self.get_turns(path, start_edge)
 
 	def egde_to_turn(self, se, ee):
-		edge_to_num = {'s':0, 'e':1, 'n':2, 'w':3}
+		"""
+		return 0 - left
+				1 - right
+				2 - stright
+		"""
+		# TODO get better way to do this
+		if se == "s":
+			if ee=="e":
+				return 1
+			elif ee=="n":
+				return 2
+			elif ee=="w":
+				return 0
+		elif se=="w":
+			if ee=="e":
+				return 2
+			elif ee=="n":
+				return 0
+			elif ee=="s":
+				return 1
+		elif se=="n":
+			if ee=="e":
+				return 0
+			elif ee=="s":
+				return 2
+			elif ee=="w":
+				return 1
+		elif se=="e":
+			if ee=="n":
+				return 1
+			elif ee=="s":
+				return 0
+			elif ee=="w":
+				return 2
 
+	def get_edge_from_next_node_reference(self, first_node, last_node):
+		for key in self.nodes[first_node].edges.keys():
+			if self.nodes[first_node].edges[key].to_node == last_node:
+				return key
 
 	def get_turns(self, path, start_edge):
 		last_edge = start_edge 
@@ -95,9 +132,10 @@ class DuckietownGraph():
 			for key in self.nodes[last_node].edges.keys():
 				if self.nodes[last_node].edges[key].to_node == next_node:
 					turn_edge = key
-					print(turn_edge)
-					last_edge = key 
+					turns.append(self.egde_to_turn(last_edge, turn_edge))
+					last_edge = self.get_edge_from_next_node_reference(next_node, last_node) 
 					last_node = next_node
+		return turns, last_edge
 
 def main():
 	graph = DuckietownGraph()
@@ -106,7 +144,9 @@ def main():
 	graph.add_node( DuckietownNode(2, (-1,-1), (1, 1), (0, 1), (3, 1)) )
 	graph.add_node( DuckietownNode(3, (2,1), (1,1), (1,1), (-1,-1)) )
 
-	graph.find_path(0, 's', 2)
+	t, e = graph.find_path(3, 's', 0)
+	print(t)
+	print(e)
 
 
 if __name__ == "__main__":
