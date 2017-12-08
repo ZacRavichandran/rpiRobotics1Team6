@@ -141,9 +141,13 @@ class DuckietownGraph():
 def get_duckietown_path(start_node, start_edge, end_node):
 	graph = DuckietownGraph()
 	graph.add_node( DuckietownNode(0, (2,3.5), (4,1), (-1, -1), (1, 1)) )
-	graph.add_node( DuckietownNode(1, (2, 2), (3, 7), (0, 1), (3,1)) )
+	# long edge
+	long_edge_length = 7
+	graph.add_node( DuckietownNode(1, (2, 2), (3, long_edge_length), (0, 1), (3,1)) )
 	graph.add_node( DuckietownNode(2, (-1,-1), (1, 2), (0, 3.5), (3, 3.5)) )
-	graph.add_node( DuckietownNode(3, (2,3.5), (1,7), (1,1), (-1,-1)) )
+
+	# long edge
+	graph.add_node( DuckietownNode(3, (2,3.5), (1, long_edge_length), (1,1), (-1,-1)) )
 
 	# garage node
 	graph.add_node( DuckietownNode(4, (0,1), (-1,-1), (-1,-1), (-1,-1)) )
@@ -164,7 +168,7 @@ def get_duckietown_route(nodes, start_edge, end_command = []):
 	return path, current_edge
 
 def main():
-	print(get_duckietown_route([0,1, 2,3, 4], 's'))
+	print(get_duckietown_route([0,3,1,4], 's'))
 
 
 if __name__ == "__main__":

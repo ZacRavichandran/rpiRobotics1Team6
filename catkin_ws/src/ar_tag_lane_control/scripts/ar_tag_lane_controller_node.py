@@ -60,7 +60,7 @@ class ar_tag_lane_controller(object):
         # 3: stop temporarily
         # 4: stop and wait for instructions
         turn_instructions = []
-        turn_instructions, end_edge = graph_routing.get_duckietown_route([3, 4], 's', end_command=[4])
+        turn_instructions, end_edge = graph_routing.get_duckietown_route([0,2,1,4], 's', end_command=[4])
         self.turn_instructions = turn_instructions
         self.print_route(self.turn_instructions)
         self.last_stop_line = 0
@@ -428,12 +428,6 @@ class ar_tag_lane_controller(object):
                     self.obstacle_x_position = 0
                     self.obstacle_z_position = 0
                     self.tag_id = -1
-            elif z_pos < self.slow_down_dist:
-                #self.current_v = self.v_bar / 2
-                rospy.loginfo("Found z pos to be %f - slowing down" %(z_pos))
-            elif z_pos >= self.slow_down_dist:
-                #self.current_v = self.v_bar
-                rospy.loginfo("Found z pos to be %f - speeding up" %(z_pos))
 
 if __name__ == "__main__":
     rospy.init_node("ar_tag_lane_controller",anonymous=False)
