@@ -60,7 +60,7 @@ class ar_tag_lane_controller(object):
         # 3: stop temporarily
         # 4: stop and wait for instructions
         turn_instructions = []
-        turn_instructions, end_edge = graph_routing.get_duckietown_route([0,2,1,4], 's', end_command=[4])
+        turn_instructions, end_edge = graph_routing.get_duckietown_route([0,1,2,3,4], 's', end_command=[4])
         self.turn_instructions = turn_instructions
         self.print_route(self.turn_instructions)
         self.last_stop_line = 0
@@ -291,9 +291,10 @@ class ar_tag_lane_controller(object):
 
     def make_and_send_control_msg(self, header, v, omega):
         car_control_msg = Twist2DStamped()
-        car_control_msg.header = header 
+        #car_control_msg.header = header 
         car_control_msg.v = v
         car_control_msg.omega = omega  
+        print("Sending v: %f, w:%f" %(v, omega))
         self.publishCmd(car_control_msg)
 
     def turn_left(self):
@@ -320,8 +321,8 @@ class ar_tag_lane_controller(object):
         self.go_straight(t)
 
     def cb_stop_line(self, msg):
-        stop_time_filter = 1.25
-        print("At Stop line")
+        stop_time_filter = 1.2
+        #print("At Stop line")
         if time.time() - self.last_stop_line > stop_time_filter:
             rospy.loginfo(msg.header.stamp)
             self.at_stop_line = True
@@ -407,21 +408,14 @@ class ar_tag_lane_controller(object):
                     yd = z_pos
 
                     # left is positive x!
-                    xd = -0.2
-                    yd = 0.3
+                    xd = -0.3
+                    yd = 0.5
                     t = 1
                     phi = 0
-                    t_adj = 1.3
+                    t_adj = 2
                     w, v = self.go_to_position_with_inverse_kin_wv(self.last_header, xd, yd, t, phi, time_adjust=t_adj)
-                    phi = w * t*t_adj
-                    xd = 0
-                    yd = 0.3
-                    w, v = self.go_to_position_with_inverse_kin_wv(self.last_header, xd, yd, t, phi,time_adjust=t_adj)
-                    phi = phi + w * t*t_adj
-                    xd = -0.2
-                    yd = 0.3
-                    w, v = self.go_to_position_with_inverse_kin_wv(self.last_header, xd, yd, t, phi, time_adjust=t_adj)
-                    self.last_id = tag_id
+                    #phi = w * t*t_adj
+               
 
                 else:
                     rospy.loginfo("Skipping repeat")

@@ -21,16 +21,23 @@ class ObstacleDetectorNode(object):
 		self.pub_visualize = rospy.Publisher("~tag_detections", AprilTagDetectionArray, queue_size=1)
 		self.stop_sign_id = 10
 		self.stop_sign_svm = fit_svm.SVM()
+		self.found_image_count = 0
 
-	def write_results(self, file, shape, size, ar, r, g, b, stop_sign = True):
-		msg = "%d,%f,%f,%f,%f,%f,%f\n" % (stop_sign, shape, size, ar, r, g, b)
+	def write_results(self, file, shape, size, ar, r, g, b, label):
+		msg = "%d,%f,%f,%f,%f,%f,%f\n" % (label, shape, size, ar, r, g, b)
 		self.write_to_file(file, msg)
 
 	def write_to_file(self, file, msg):
 		dir_path = os.path.dirname(os.path.realpath(__file__))
 		file_loc = dir_path + "/" + file
 		with open(file_loc, 'a') as f:
-			f.write(msg)		
+			f.write(msg)	
+
+	def save_img(self, img, title):	
+		dir_path = os.path.dirname(os.path.realpath(__file__))
+		file_loc = dir_path + "/found_images/%d" % self.found_image_count + title
+		cv2.imwrite(file_loc, img) 
+		self.found_image_count += 1
 
 	def find_signs(self, img):
 		shapes = find_stop_signs(img)
@@ -41,12 +48,16 @@ class ObstacleDetectorNode(object):
 			ar = w / float(h)
 			if shape.size > 100 and ar >= 0.3: # shape.shape >= 3 and shape.size > 1000 and ar <= 1.05 and ar >= 0.7:
 				is_stop_sign = self.stop_sign_svm.classify_point(np.reshape(np.array([shape.shape, shape.size, ar, shape.r, shape.g, shape.b]), (1,6)))
-				if is_stop_sign:
+				if is_stop_sign ==1:
 					rospy.loginfo("FOUND shape: %d at (%dx%d) of size %d with %0.3f, rgb=(%d, %d, %d)" % \
 						(shape.shape, shape.cx, shape.cy, shape.size, ar, shape.r, shape.g, shape.b))
-					#self.write_results("not_stop_sign_data_3.txt", shape.shape, shape.size, ar, shape.r, shape.g, shape.b, stop_sign = True)
+					#self.save_img(c_img, "Found_sign.jpg")
+					#self.write_results("car_data_1.txt", shape.shape, shape.size, ar, shape.r, shape.g, shape.b, 2)
 					self.make_and_publish_position_message(10, 10)
 					published = True
+				else:
+					rospy.loginfo("NOT found shape: %d at (%dx%d) of size %d with %0.3f, rgb=(%d, %d, %d)" % \
+						(shape.shape, shape.cx, shape.cy, shape.size, ar, shape.r, shape.g, shape.b))
 
 		# send signal nothing was found
 		if published == False:
