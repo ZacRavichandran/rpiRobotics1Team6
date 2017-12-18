@@ -130,10 +130,13 @@ class ar_tag_lane_controller(object):
         #cross_track_err = lane_pose_msg.d - self.d_offset
         #heading_err = lane_pose_msg.phi
 	j = 1
+	k1 = 0.5235
+	k2 = 1.2678
+	heading_err1 = 0
 	if self.found_obstacle:
-		while j < 1000:
-			cross_track_err = lane_pose_msg.d - self.d_offset
-			heading_err = lane_pose_msg.phi
+		while j < 10:
+			cross_track_err = lane_pose_msg.d - 0.0
+			heading_err = lane_pose_msg.phi - 0.3467
 	
 
         		car_control_msg = Twist2DStamped()
@@ -145,7 +148,7 @@ class ar_tag_lane_controller(object):
         
         		if math.fabs(cross_track_err) > self.d_thres:
            			cross_track_err = cross_track_err / math.fabs(cross_track_err) * self.d_thres
-        		car_control_msg.omega =  self.k_d * cross_track_err + self.k_theta * heading_err #*self.steer_gain #Right stick H-axis. Right is negative
+        		car_control_msg.omega =  k1 * heading_err - k1 * heading_err1 + k2 * heading_err #*self.steer_gain #Right stick H-axis. Right is negative
        # if not self.found_obstacle
 			self.publishCmd(car_control_msg)
 			j = j + 1  
@@ -154,7 +157,7 @@ class ar_tag_lane_controller(object):
         # car_control_msg.steering = -car_control_msg.steering
         # print "controls: speed %f, steering %f" % (car_control_msg.speed, car_control_msg.steering)
         # self.pub_.publish(car_control_msg)
-        elif not self.found_obstacle:
+        else:
         	cross_track_err = lane_pose_msg.d + 0.0
         	heading_err = lane_pose_msg.phi
 
@@ -189,6 +192,7 @@ class ar_tag_lane_controller(object):
         for tag_detection in tag_msg.detections:
             tag_id = int(tag_detection.id)
             z_pos = tag_detection.pose.pose.position.z
+	    x_pos = tag_detection.pose.pose.position.x
             if z_pos < self.stop_dist:
 		#self.publishCmd(self.stop_msg)
                 #self.current_v = self.v_bar
