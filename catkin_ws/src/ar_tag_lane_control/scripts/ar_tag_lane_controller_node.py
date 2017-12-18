@@ -151,6 +151,7 @@ class ar_tag_lane_controller(object):
         		car_control_msg.omega =  k1 * heading_err - k1 * heading_err1 + k2 * heading_err #*self.steer_gain #Right stick H-axis. Right is negative
        # if not self.found_obstacle
 			self.publishCmd(car_control_msg)
+			heading_err1 = heading_err
 			j = j + 1  
  
         # controller mapping issueheading_err = lane_pose_msg.phiheading_err = lane_pose_msg.phi
