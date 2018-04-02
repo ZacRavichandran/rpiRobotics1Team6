@@ -108,7 +108,7 @@ class lane_controller_logging(object):
         heading_err = lane_pose_msg.phi
 
 
-        rospy.loginfo("lane_controller_logging node recieved callback. Error of (%f, %f)" % (cross_track_err, heading_err))
+        rospy.loginfo("lane_controller_logging node recieved callback. Error of (d, phi) = (%f, %f)" % (cross_track_err, heading_err))
 
         car_control_msg = Twist2DStamped()
         car_control_msg.header = lane_pose_msg.header
