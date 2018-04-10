@@ -1,6 +1,7 @@
 <launch>
     <arg name="veh" doc="Name of vehicle. ex: megaman"/>
     <arg name="local" default="false" doc="true for running on laptop. false for running on vehicle."/>
+    <arg name="controller_local" default="true" />
     <arg name="config" default="baseline" doc="Specify a config."/>
     <arg name="param_file_name" default="default" doc="Specify a param file. ex:megaman. Note that you will need a megaman.yaml in the config folder for every node you are launching. To test with only one megaman.yaml, the recommendation is to set this to default and then manually change the desired param file in the approprate rosparam tag below"/> 
     <arg name="use_vicon" default="false"/>
@@ -35,7 +36,7 @@
     <remap from="lane_controller_logging_node/lane_pose" to="lane_filter_logging_node/lane_pose"/>
     <include file="$(find lane_control)/launch/lane_controller_logging_node.launch">
         <arg name="veh" value="$(arg veh)"/>
-        <arg name="local" value="$(arg local)"/>
+        <arg name="local" value="$(arg controller_local)"/>
         <arg name="config" value="$(arg config)"/>
         <arg name="param_file_name" value="$(arg param_file_name)"/>        
     </include>

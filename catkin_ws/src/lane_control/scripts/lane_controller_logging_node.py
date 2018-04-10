@@ -27,6 +27,10 @@ class lane_controller_logging(object):
         self.gains_timer = rospy.Timer(rospy.Duration.from_sec(1.0), self.getGains_event)
         rospy.loginfo("[%s] Initialized " %(rospy.get_name()))
 
+        self.last_cross_track_error = np.NaN
+        self.last_heading_error = np.NaN 
+        self.itr = 0
+
     def setupParameter(self,param_name,default_value):
         value = rospy.get_param(param_name,default_value)
         rospy.set_param(param_name,value) #Write to parameter server for transparancy
@@ -107,12 +111,21 @@ class lane_controller_logging(object):
         cross_track_err = lane_pose_msg.d - self.d_offset
         heading_err = lane_pose_msg.phi
 
+        # Filter out bad readings
+        if not np.isnan(self.last_cross_track_error) \
+            and np.abs(self.last_cross_track_error - cross_track_err) > 0.2 \
+            and self.itr > 3:
+            rospy.loginfo("Chaning far heading error of %d" % cross_track_err)
+            cross_track_err = self.last_cross_track_error
+            heading_err = self.last_heading_error
+
         car_control_msg = Twist2DStamped()
         car_control_msg.header = lane_pose_msg.header
         car_control_msg.v = self.v_bar #*self.speed_gain #Left stick V-axis. Up is positive
         
         if math.fabs(cross_track_err) > self.d_thres:
             cross_track_err = cross_track_err / math.fabs(cross_track_err) * self.d_thres
+            rospy.loginfo("error above thres so chaning it")
         car_control_msg.omega =  self.k_d * cross_track_err + self.k_theta * heading_err #*self.steer_gain #Right stick H-axis. Right is negative
         
         # controller mapping issue
@@ -124,6 +137,11 @@ class lane_controller_logging(object):
         rospy.loginfo("lane_controller_logging node recieved callback. Error of (d, phi) = \
                 (%f, %f, %f)" % (cross_track_err, heading_err, car_control_msg.omega))
 
+        if self.itr > 3:
+            self.last_cross_track_error = cross_track_err
+            self.heading_err = heading_err
+
+        self.itr += 1
 
         # debuging
         # self.pub_counter += 1
