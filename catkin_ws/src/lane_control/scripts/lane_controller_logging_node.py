@@ -107,9 +107,6 @@ class lane_controller_logging(object):
         cross_track_err = lane_pose_msg.d - self.d_offset
         heading_err = lane_pose_msg.phi
 
-
-        rospy.loginfo("lane_controller_logging node recieved callback. Error of (d, phi) = (%f, %f)" % (cross_track_err, heading_err))
-
         car_control_msg = Twist2DStamped()
         car_control_msg.header = lane_pose_msg.header
         car_control_msg.v = self.v_bar #*self.speed_gain #Left stick V-axis. Up is positive
@@ -123,6 +120,10 @@ class lane_controller_logging(object):
         # print "controls: speed %f, steering %f" % (car_control_msg.speed, car_control_msg.steering)
         # self.pub_.publish(car_control_msg)
         self.publishCmd(car_control_msg)
+
+        rospy.loginfo("lane_controller_logging node recieved callback. Error of (d, phi) = \
+                (%f, %f, %f)" % (cross_track_err, heading_err, car_control_msg.omega))
+
 
         # debuging
         # self.pub_counter += 1
