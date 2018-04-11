@@ -106,6 +106,17 @@ class lane_controller_logging(object):
         #self.pub_wheels_cmd.publish(wheels_cmd_msg)
 
     def cbPose(self,lane_pose_msg):
+        """
+        Wait 3 iterations before we start to initialize camera
+        Also, filter out any distance readings greater than 0.1m 
+        above what we last say
+        """
+
+        if self.itr < 3:
+            self.itr += 1
+            rospy.loginfo("Itr: %d, skipping call" % self.itr)
+            return
+
         self.lane_reading = lane_pose_msg 
 
         cross_track_err = lane_pose_msg.d - self.d_offset
@@ -113,9 +124,9 @@ class lane_controller_logging(object):
 
         # Filter out bad readings
         if not np.isnan(self.last_cross_track_error) \
-            and np.abs(self.last_cross_track_error - cross_track_err) > 0.2 \
+            and np.abs(self.last_cross_track_error - cross_track_err) > 0.1 \
             and self.itr > 3:
-            rospy.loginfo("Chaning far heading error of %d" % cross_track_err)
+            rospy.loginfo("Chaning far heading error of %f" % cross_track_err)
             cross_track_err = self.last_cross_track_error
             heading_err = self.last_heading_error
 
@@ -139,7 +150,7 @@ class lane_controller_logging(object):
 
         if self.itr > 3:
             self.last_cross_track_error = cross_track_err
-            self.heading_err = heading_err
+            self.last_heading_error = heading_err
 
         self.itr += 1
 
