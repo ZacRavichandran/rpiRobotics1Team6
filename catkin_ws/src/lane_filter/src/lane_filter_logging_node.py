@@ -67,6 +67,11 @@ For more info on algorithm and parameters please refer to the google doc:
 
         self.timer = rospy.Timer(rospy.Duration.from_sec(1.0), self.updateParams)
 
+        self.measurement_likelihood_list = []
+        self.prior_bel_list = []
+        self.post_bel_list = []
+        self.time_list = []
+        self.log_bel = True
 
     def updateParams(self, event):
         self.mean_0 = [rospy.get_param("~mean_d_0",0) , rospy.get_param("~mean_phi_0",0)]
@@ -137,6 +142,7 @@ For more info on algorithm and parameters please refer to the google doc:
             i = floor((d_i - self.d_min)/self.delta_d)
             j = floor((phi_i - self.phi_min)/self.delta_phi)
 
+
             if self.use_distance_weighting:           
                 dist_weight = self.dwa*l_i**3+self.dwb*l_i**2+self.dwc*l_i+self.zero_val
                 if dist_weight < 0:
@@ -144,16 +150,24 @@ For more info on algorithm and parameters please refer to the google doc:
                 measurement_likelihood[i,j] = measurement_likelihood[i,j] + dist_weight
             else:
                 measurement_likelihood[i,j] = measurement_likelihood[i,j] +  1/(l_i)
-
+        
 
         if np.linalg.norm(measurement_likelihood) == 0:
             return
         measurement_likelihood = measurement_likelihood/np.sum(measurement_likelihood)
 
+        if self.log_bel:
+            self.measurement_likelihood_list.append(measurement_likelihood)
+            self.prior_bel_list.append(self.beliefRV)
+            self.time_list.append(time.time())
+
         if self.use_propagation:
             self.updateBelief(measurement_likelihood)
         else:
             self.beliefRV = measurement_likelihood
+
+        if self.log_bel:
+            self.post_bel_list.append(self.beliefRV)
 
         # TODO entropy test:
         #print self.beliefRV.argmax()
@@ -282,6 +296,11 @@ For more info on algorithm and parameters please refer to the google doc:
         return sqrt(x_c**2 + y_c**2)
 
     def onShutdown(self):
+        if self.log_bel:
+            np.savez('measurements.npz', time=self.time_list, \
+                measurement_likelihood=self.measurement_likelihood_list, \
+                prior_belief=self.prior_bel_list, \
+                post_beleif=self.post_bel_list)
         rospy.loginfo("[LaneFilterLoggingNode] Shutdown.")
 
 
