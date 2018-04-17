@@ -73,6 +73,8 @@ For more info on algorithm and parameters please refer to the google doc:
         self.post_bel_list = []
         self.time_list = []
         self.log_bel = True
+        self.d_list = []
+        self.theta_list = []
 
     def updateParams(self, event):
         self.mean_0 = [rospy.get_param("~mean_d_0",0) , rospy.get_param("~mean_phi_0",0)]
@@ -167,9 +169,6 @@ For more info on algorithm and parameters please refer to the google doc:
         else:
             self.beliefRV = measurement_likelihood
 
-        if self.log_bel:
-            self.post_bel_list.append(self.beliefRV)
-
         # TODO entropy test:
         #print self.beliefRV.argmax()
 
@@ -179,6 +178,11 @@ For more info on algorithm and parameters please refer to the google doc:
         self.lanePose.d = self.d_min + maxids[0]*self.delta_d
         self.lanePose.phi = self.phi_min + maxids[1]*self.delta_phi
         self.lanePose.status = self.lanePose.NORMAL
+
+        if self.log_bel:
+            self.post_bel_list.append(self.beliefRV)
+            self.d_list.append(self.lanePose.d)
+            self.theta_list.append(self.lanePose.phi)
 
         # publish the belief image
         bridge = CvBridge()
@@ -298,10 +302,11 @@ For more info on algorithm and parameters please refer to the google doc:
 
     def onShutdown(self):
         if self.log_bel:
-            np.savez('measurements.npz', time=self.time_list, \
-                measurement_likelihood=np.array(self.measurement_likelihood_list), \
-                prior_belief=self.prior_bel_list, \
-                post_beleif=self.post_bel_list)
+            np.savez('/home/ubuntu/measurements.npz', time=self.time_list, 
+                measurement_likelihood=np.array(self.measurement_likelihood_list), 
+                prior_belief=self.prior_bel_list, 
+                post_beleif=self.post_bel_list,
+                d=self.d_list, theta=self.theta_list)
             rospy.loginfo("Saved measurements to %s" % os.getcwd())
         rospy.loginfo("[LaneFilterLoggingNode] Shutdown.")
 
