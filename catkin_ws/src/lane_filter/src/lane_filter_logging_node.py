@@ -9,6 +9,7 @@ from scipy.stats import multivariate_normal, entropy
 from scipy.ndimage.filters import gaussian_filter
 from math import floor, atan2, pi, cos, sin, sqrt
 import time
+import os
 
 
 class LaneFilterLoggingNode(object):
@@ -298,9 +299,10 @@ For more info on algorithm and parameters please refer to the google doc:
     def onShutdown(self):
         if self.log_bel:
             np.savez('measurements.npz', time=self.time_list, \
-                measurement_likelihood=self.measurement_likelihood_list, \
+                measurement_likelihood=np.array(self.measurement_likelihood_list), \
                 prior_belief=self.prior_bel_list, \
                 post_beleif=self.post_bel_list)
+            rospy.loginfo("Saved measurements to %s" % os.getcwd())
         rospy.loginfo("[LaneFilterLoggingNode] Shutdown.")
 
 
